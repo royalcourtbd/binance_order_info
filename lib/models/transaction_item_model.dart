@@ -22,11 +22,6 @@ class TransactionItemModel {
   });
 
   factory TransactionItemModel.fromJson(Map<String, dynamic> json) {
-    // Log the raw JSON for debugging
-    print('🔧 Parsing transaction: ${json['orderNumber']}');
-    print('🕐 createTime type: ${json['createTime']?.runtimeType}');
-    print('🕐 createTime value: ${json['createTime']}');
-
     // Safely parse createTime - handle different types
     int? createTime;
     final createTimeValue = json['createTime'];
@@ -35,8 +30,6 @@ class TransactionItemModel {
     } else if (createTimeValue is String) {
       createTime = int.tryParse(createTimeValue);
     } else if (createTimeValue is Map) {
-      print('⚠️ WARNING: createTime is a Map, not an int!');
-      print('📦 createTime Map content: $createTimeValue');
       // Try to extract timestamp from map if it exists
       if (createTimeValue.containsKey('timestamp')) {
         createTime = createTimeValue['timestamp'] as int?;

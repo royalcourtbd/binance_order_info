@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 
 class SummaryItem extends StatelessWidget {
   final String label;
-  final String amount;
+  final String? totalAmountUsdt;
+  final String? totalAmountBdt;
   final Color color;
 
   const SummaryItem({
     super.key,
     required this.label,
-    required this.amount,
+    this.totalAmountUsdt,
+    this.totalAmountBdt,
     required this.color,
   });
 
@@ -18,14 +20,18 @@ class SummaryItem extends StatelessWidget {
       children: [
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
         const SizedBox(height: 4),
-        Text(
-          amount,
-          style: TextStyle(
-            color: color,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        if (totalAmountUsdt != null) ...[
+          Text(
+            "₮$totalAmountUsdt",
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
           ),
-        ),
+        ],
+        if (totalAmountBdt != null) ...[
+          Text(
+            "৳$totalAmountBdt",
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
       ],
     );
   }

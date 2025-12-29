@@ -26,27 +26,27 @@ class P2POrderScreen extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
-          Obx(() => controller.isLoading.value
-              ? const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+          Obx(
+            () => controller.isLoading.value
+                ? const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.black),
+                    onPressed: () => controller.refreshOrders(),
                   ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.black),
-                  onPressed: () => controller.refreshOrders(),
-                )),
+          ),
         ],
       ),
       body: Obx(() {
         // Loading state
         if (controller.isLoading.value && controller.dateSections.isEmpty) {
-          return const LoadingWidget(
-            message: 'Fetching orders from API...',
-          );
+          return const LoadingWidget(message: 'Fetching orders from API...');
         }
 
         // Error state
@@ -77,17 +77,30 @@ class P2POrderScreen extends StatelessWidget {
                 children: [
                   SummaryItem(
                     label: "Buy",
-                    amount: _formatAmount(controller.summary.value.totalBuyValue),
+                    totalAmountUsdt: _formatAmount(
+                      controller.summary.value.totalBuyAmount,
+                    ),
+                    totalAmountBdt: _formatAmount(
+                      controller.summary.value.totalBuyValue,
+                    ),
                     color: Colors.blue,
                   ),
                   SummaryItem(
                     label: "Sell",
-                    amount: _formatAmount(controller.summary.value.totalSellValue),
+                    totalAmountUsdt: _formatAmount(
+                      controller.summary.value.totalSellAmount,
+                    ),
+                    totalAmountBdt: _formatAmount(
+                      controller.summary.value.totalSellValue,
+                    ),
                     color: Colors.red,
                   ),
+
                   SummaryItem(
                     label: "Profit",
-                    amount: _formatAmount(controller.summary.value.netProfitBdt),
+                    totalAmountUsdt: _formatAmount(
+                      controller.summary.value.netProfitBdt,
+                    ),
                     color: controller.summary.value.netProfitBdt >= 0
                         ? Colors.green
                         : Colors.red,
