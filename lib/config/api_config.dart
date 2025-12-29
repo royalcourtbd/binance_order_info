@@ -5,7 +5,7 @@ class ApiConfig {
   //   Mac: ifconfig en0 | grep inet
   //   Linux: ip addr show
   // Example: http://192.168.1.100:8000
-  static const String baseUrl = 'http://192.168.0.118:8000';
+  static const String baseUrl = 'http://192.168.0.101:8000';
 
   // API Endpoints
   static const String completedOrdersEndpoint = '/api/orders/completed';
