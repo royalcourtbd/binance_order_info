@@ -69,12 +69,19 @@ class DateSection extends StatelessWidget {
             ],
           ),
         ),
-        ...model.transactions.map((transaction) => TransactionItem(
-              category: transaction.category,
-              title: transaction.title,
-              method: transaction.method,
-              amount: transaction.amount,
-            )),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: model.transactions.length,
+          itemBuilder: (context, index) {
+            return TransactionItem(
+              category: model.transactions[index].category,
+              title: model.transactions[index].title,
+              method: model.transactions[index].method,
+              amount: model.transactions[index].amount,
+            );
+          },
+        ),
         const Divider(height: 1, thickness: 0.5),
       ],
     );
