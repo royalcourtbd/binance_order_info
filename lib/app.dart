@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'screens/p2p_order_screen.dart';
 
 class BinanceP2PApp extends StatelessWidget {
@@ -6,7 +7,7 @@ class BinanceP2PApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(useMaterial3: true),
       home: P2POrderScreen(),
