@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
-import '../models/date_section_model.dart';
-import '../models/transaction_item_model.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import '../controllers/orders_controller.dart';
 import '../widgets/summary_item.dart';
 import '../widgets/date_section.dart';
+import '../widgets/loading_widget.dart';
+import '../widgets/error_widget.dart';
+import '../widgets/empty_state_widget.dart';
 
 class P2POrderScreen extends StatelessWidget {
   P2POrderScreen({super.key});
+
+  final OrdersController controller = Get.put(OrdersController());
 
   @override
   Widget build(BuildContext context) {
@@ -19,228 +25,97 @@ class P2POrderScreen extends StatelessWidget {
           style: TextStyle(color: Colors.black, fontSize: 18),
         ),
         centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Top Summary Header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SummaryItem(
-                  label: "Buy",
-                  amount: "35,000.00",
-                  color: Colors.blue,
-                ),
-                SummaryItem(
-                  label: "Sell",
-                  amount: "30,220.00",
-                  color: Colors.red,
-                ),
-                SummaryItem(
-                  label: "Total",
-                  amount: "4,780.00",
-                  color: Colors.black87,
-                ),
-              ],
-            ),
-          ),
-
-          // Transaction List
-          Expanded(
-            child: ListView.builder(
-              itemCount: dateSections.length,
-              itemBuilder: (context, index) {
-                return DateSection(model: dateSections[index]);
-              },
-            ),
-          ),
+        actions: [
+          Obx(() => controller.isLoading.value
+              ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.black),
+                  onPressed: () => controller.refreshOrders(),
+                )),
         ],
       ),
+      body: Obx(() {
+        // Loading state
+        if (controller.isLoading.value && controller.dateSections.isEmpty) {
+          return const LoadingWidget(
+            message: 'Fetching orders from API...',
+          );
+        }
+
+        // Error state
+        if (controller.errorMessage.isNotEmpty &&
+            controller.dateSections.isEmpty) {
+          return ErrorDisplayWidget(
+            message: controller.errorMessage.value,
+            onRetry: () => controller.refreshOrders(),
+          );
+        }
+
+        // Empty state
+        if (controller.dateSections.isEmpty) {
+          return const EmptyStateWidget();
+        }
+
+        // Success state with data
+        return Column(
+          children: [
+            // Top Summary Header
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SummaryItem(
+                    label: "Buy",
+                    amount: _formatAmount(controller.summary.value.totalBuyValue),
+                    color: Colors.blue,
+                  ),
+                  SummaryItem(
+                    label: "Sell",
+                    amount: _formatAmount(controller.summary.value.totalSellValue),
+                    color: Colors.red,
+                  ),
+                  SummaryItem(
+                    label: "Profit",
+                    amount: _formatAmount(controller.summary.value.netProfitBdt),
+                    color: controller.summary.value.netProfitBdt >= 0
+                        ? Colors.green
+                        : Colors.red,
+                  ),
+                ],
+              ),
+            ),
+
+            // Transaction List with pull-to-refresh
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => controller.refreshOrders(),
+                child: ListView.builder(
+                  itemCount: controller.dateSections.length,
+                  itemBuilder: (context, index) {
+                    return DateSection(model: controller.dateSections[index]);
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 
-  final List<DateSectionModel> dateSections = [
-    DateSectionModel(
-      date: "26",
-      day: "Fri",
-      year: "12.2025",
-      dayBuy: "0.00",
-      daySell: "80.00",
-      transactions: [
-        TransactionItemModel(
-          category: "Sell",
-          title: "#1234567896",
-          method: "Cash",
-          amount: "80.00",
-        ),
-      ],
-    ),
-    DateSectionModel(
-      date: "25",
-      day: "Thu",
-      year: "12.2025",
-      dayBuy: "0.00",
-      daySell: "215.00",
-      transactions: [
-        TransactionItemModel(
-          category: "Sell",
-          title: "#1234567897",
-          method: "Cash",
-          amount: "85.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#1234567898",
-          method: "Cash",
-          amount: "80.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#1234567899",
-          method: "Cash",
-          amount: "50.00",
-        ),
-      ],
-    ),
-    DateSectionModel(
-      date: "24",
-      day: "Wed",
-      year: "12.2025",
-      dayBuy: "0.00",
-      daySell: "1,005.00",
-      transactions: [
-        TransactionItemModel(
-          category: "Sell",
-          title: "#123456789",
-          method: "Cash",
-          amount: "130.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#987654321",
-          method: "Cash",
-          amount: "620.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#1122334455",
-          method: "Cash",
-          amount: "40.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#215487963",
-          method: "Cash",
-          amount: "215.00",
-        ),
-      ],
-    ),
-
-    DateSectionModel(
-      date: "24",
-      day: "Wed",
-      year: "12.2025",
-      dayBuy: "0.00",
-      daySell: "1,005.00",
-      transactions: [
-        TransactionItemModel(
-          category: "Sell",
-          title: "#123456789",
-          method: "Cash",
-          amount: "130.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#987654321",
-          method: "Cash",
-          amount: "620.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#1122334455",
-          method: "Cash",
-          amount: "40.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#215487963",
-          method: "Cash",
-          amount: "215.00",
-        ),
-      ],
-    ),
-
-    DateSectionModel(
-      date: "24",
-      day: "Wed",
-      year: "12.2025",
-      dayBuy: "0.00",
-      daySell: "1,005.00",
-      transactions: [
-        TransactionItemModel(
-          category: "Sell",
-          title: "#123456789",
-          method: "Cash",
-          amount: "130.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#987654321",
-          method: "Cash",
-          amount: "620.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#1122334455",
-          method: "Cash",
-          amount: "40.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#215487963",
-          method: "Cash",
-          amount: "215.00",
-        ),
-      ],
-    ),
-
-    DateSectionModel(
-      date: "24",
-      day: "Wed",
-      year: "12.2025",
-      dayBuy: "0.00",
-      daySell: "1,005.00",
-      transactions: [
-        TransactionItemModel(
-          category: "Sell",
-          title: "#123456789",
-          method: "Cash",
-          amount: "130.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#987654321",
-          method: "Cash",
-          amount: "620.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#1122334455",
-          method: "Cash",
-          amount: "40.00",
-        ),
-        TransactionItemModel(
-          category: "Sell",
-          title: "#215487963",
-          method: "Cash",
-          amount: "215.00",
-        ),
-      ],
-    ),
-  ];
+  String _formatAmount(double amount) {
+    final formatter = NumberFormat('#,##0.00');
+    return formatter.format(amount);
+  }
 }

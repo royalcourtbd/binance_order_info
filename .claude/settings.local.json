@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(flutter analyze:*)",
-      "Bash(flutter pub get:*)"
+      "Bash(flutter pub get:*)",
+      "Bash(tree:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(python3:*)"
     ]
   }
 }
