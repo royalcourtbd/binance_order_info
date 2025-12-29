@@ -1,18 +1,14 @@
+import 'package:binance_order_info/models/transaction_item_model.dart';
 import 'package:flutter/material.dart';
 
 class TransactionItem extends StatelessWidget {
-  final String category;
-  final String title;
-  final String method;
-  final String amount;
+  // final String category;
+  // final String title;
+  // final String method;
+  // final String amount;
+  final TransactionItemModel transaction;
 
-  const TransactionItem({
-    super.key,
-    required this.category,
-    required this.title,
-    required this.method,
-    required this.amount,
-  });
+  const TransactionItem({super.key, required this.transaction});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +20,7 @@ class TransactionItem extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Text(
-              category,
+              transaction.category,
               style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
           ),
@@ -34,11 +30,11 @@ class TransactionItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  transaction.title,
                   style: const TextStyle(fontSize: 15, color: Colors.black87),
                 ),
                 Text(
-                  method,
+                  transaction.method,
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
@@ -47,9 +43,9 @@ class TransactionItem extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Text(
-              "৳ $amount",
+              "৳ ${transaction.amount}",
               textAlign: TextAlign.right,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.red,
                 fontSize: 15,
                 fontWeight: FontWeight.w400,

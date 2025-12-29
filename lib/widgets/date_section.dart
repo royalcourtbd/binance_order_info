@@ -5,10 +5,7 @@ import 'transaction_item.dart';
 class DateSection extends StatelessWidget {
   final DateSectionModel model;
 
-  const DateSection({
-    super.key,
-    required this.model,
-  });
+  const DateSection({super.key, required this.model});
 
   @override
   Widget build(BuildContext context) {
@@ -74,12 +71,9 @@ class DateSection extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: model.transactions.length,
           itemBuilder: (context, index) {
-            return TransactionItem(
-              category: model.transactions[index].category,
-              title: model.transactions[index].title,
-              method: model.transactions[index].method,
-              amount: model.transactions[index].amount,
-            );
+            final dateModel = model.transactions[index];
+
+            return TransactionItem(transaction: dateModel);
           },
         ),
         const Divider(height: 1, thickness: 0.5),
