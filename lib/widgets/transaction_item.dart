@@ -42,7 +42,9 @@ class TransactionItem extends StatelessWidget {
               "৳ ${double.tryParse(transaction.amount)?.toStringAsFixed(2) ?? transaction.amount}",
               textAlign: TextAlign.right,
               style: TextStyle(
-                color: Colors.red,
+                color: transaction.category.toUpperCase() == 'BUY'
+                    ? Colors.blue
+                    : Colors.red,
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
               ),

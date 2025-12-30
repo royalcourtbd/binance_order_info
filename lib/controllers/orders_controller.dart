@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:get/get.dart';
 import '../models/date_section_model.dart';
 import '../models/transaction_item_model.dart';
@@ -48,7 +50,7 @@ class OrdersController extends GetxController {
             final transaction = TransactionItemModel.fromJson(ordersList[i]);
             transactions.add(transaction);
           } catch (e, stackTrace) {
-            print('🔍 Stack trace: $stackTrace');
+            log('🔍 Stack trace: $stackTrace');
             // Continue processing other orders instead of failing completely
           }
         }
@@ -56,7 +58,7 @@ class OrdersController extends GetxController {
         // Group transactions by date
         dateSections.value = _groupTransactionsByDate(transactions);
       } catch (e, stackTrace) {
-        print('🔍 Stack trace: $stackTrace');
+        log('🔍 Stack trace: $stackTrace');
         errorMessage.value = 'Error processing orders: $e';
       }
     } else {
