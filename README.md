@@ -24,6 +24,8 @@
 
 ## ✨ Key Features
 
+## ✨ Key Features
+
 - 📊 **Completed Orders Tracking**: গত 30 দিনের সব completed P2P orders দেখুন
 - 💰 **Financial Summary**: Total buy/sell amounts, fees, এবং net profit calculation
 - 📈 **Analytics Dashboard**: Average buy/sell prices, profit percentage
@@ -175,6 +177,7 @@
    ```
 
 4. **Automated Pipeline 🤖**
+
    - ✅ Triggers release workflow
    - ✅ Builds APK & AAB with split-per-abi
    - ✅ Creates GitHub release with changelogs
@@ -239,24 +242,88 @@ lib/
     └── [other widgets...]
 ```
 
-### 🎯 App Architecture
+## 🚀 Getting Started
 
-- **MVC Pattern**: Controllers handle business logic
-- **Service Layer**: Isolated API communication
-- **Model Layer**: Type-safe data models
-- **Reactive UI**: GetX observables for real-time updates
-- **Modular Structure**: Feature-based organization
+### Prerequisites
 
-### ⚙️ Backend API Configuration
+- Flutter SDK 3.38.5 বা তার উপরে
+- Dart SDK 3.10.4 বা তার উপরে
+- Android Studio / VS Code
+- Backend API server running (default: `http://192.168.0.101:8000`)
 
-এই app একটি backend API এর সাথে communicate করে:
+### Installation
 
-**API Endpoints**:
+1. **Clone the repository**
 
-- `GET /api/orders/completed?days=30&use_cache=true` - Completed orders fetch
-- `GET /api/orders/summary?days=30&use_cache=true` - Summary statistics
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/binance_order_info.git
+   cd binance_order_info
+   ```
 
-**Configuration** ([api_config.dart](lib/config/api_config.dart)):
+2. **Install dependencies**
+
+   ```bash
+   flutter pub get
+   ```
+
+3. **Run the app**
+
+   ```bash
+   flutter run
+   ```
+
+### Backend API Setup
+
+এই app একটি backend API এর সাথে communicate করে। Backend API endpoints:
+
+- `GET /api/orders/completed?days=30&use_cache=true` - Completed orders fetch করে
+- `GET /api/orders/summary?days=30&use_cache=true` - Summary statistics fetch করে
+
+App settings icon থেকে custom server IP configure করতে পারবেন।
+
+## 📥 Download App
+
+### Option 1: GitHub Releases (Recommended)
+
+Latest stable version download করতে:
+
+1. [Releases page](https://github.com/royalcourtbd/binance_order_info/releases) এ যান
+2. Latest release select করুন
+3. **Assets** section থেকে আপনার device এর জন্য appropriate APK download করুন:
+   - `app-arm64-v8a-release.apk` - বেশিরভাগ modern Android devices (64-bit)
+   - `app-armeabi-v7a-release.apk` - পুরানো Android devices (32-bit)
+   - `app-x86_64-release.apk` - Intel-based Android devices
+4. APK install করুন (Settings → Security → "Install from Unknown Sources" enable করতে হতে পারে)
+
+### Option 2: CI/CD Build Artifacts
+
+Development builds download করতে:
+
+#### Build Branch থেকে:
+
+1. [Actions tab](https://github.com/YOUR_USERNAME/binance_order_info/actions) এ যান
+2. **Android Release Build** workflow select করুন
+3. সবচেয়ে recent successful run select করুন
+4. Scroll down করে **Artifacts** section খুঁজুন
+5. `android-release-*` artifact download করুন
+6. ZIP extract করে APK file পাবেন
+
+#### Manual Build (Testing):
+
+1. [Actions tab](https://github.com/YOUR_USERNAME/binance_order_info/actions) এ যান
+2. **Manual Android Build** workflow select করুন
+3. "Run workflow" button click করুন
+4. Build type select করুন (Debug/Release)
+5. Split APK per ABI enable করুন (smaller file size)
+6. Workflow complete হওয়ার পর artifacts download করুন
+
+**Note**: GitHub থেকে artifacts download করতে আপনার repository access থাকতে হবে।
+
+## 🔧 Configuration
+
+### API Configuration
+
+[api_config.dart](lib/config/api_config.dart) file এ default configuration:
 
 ```dart
 static const String _defaultIp = '192.168.0.101';
@@ -265,160 +332,114 @@ static const int defaultDays = 30;
 static const int timeoutSeconds = 15;
 ```
 
-Runtime এ app settings icon থেকে custom server IP configure করতে পারবেন।
+Runtime এ app settings থেকে IP address change করতে পারবেন।
 
-## 🛡️ Security & Performance
+## 🏗️ CI/CD Pipeline
 
-### 🔒 Security Features
+Project এ automated CI/CD pipeline setup করা আছে:
 
-- 📱 **Split-per-ABI Builds**: Optimized APK sizes per architecture
-- 🔍 **Weekly Security Scans**: Automated vulnerability assessment
-- 📊 **Dependency Auditing**: Regular package security checks
-- 🛡️ **Static Analysis**: Security-focused code analysis
-- 🔐 **Secure Build Pipeline**: Protected secrets and secure workflows
+### Workflows:
 
-### ⚡ Performance Optimizations
+1. **Flutter CI** ([flutter_ci.yml](.github/workflows/flutter_ci.yml))
 
-- 📦 **Build Caching**: Multi-level caching for faster builds
-- 💾 **Efficient State Management**: Reactive GetX controllers
-- 🎯 **API Caching**: Optional cache support in backend
-- ⚡ **Lazy Loading**: On-demand data fetching
+   - Trigger: `build` branch এ push, PR to `main` বা `build`
+   - Actions: Code analysis, tests, debug APK build
+   - Artifacts: Debug APK (7 days retention)
 
-### 🌍 Platform Support
+2. **Android Release Build** ([release_cd.yml](.github/workflows/release_cd.yml))
 
-| Platform   | Status              | Build Command           |
-| ---------- | ------------------- | ----------------------- |
-| 🤖 Android | ✅ Production Ready | `flutter build apk`     |
-| 🍎 iOS     | 🚧 Ready            | `flutter build ios`     |
-| 🌐 Web     | 🚧 Ready            | `flutter build web`     |
-| 🪟 Windows | 🚧 Ready            | `flutter build windows` |
-| 🍎 macOS   | 🚧 Ready            | `flutter build macos`   |
-| 🐧 Linux   | 🚧 Ready            | `flutter build linux`   |
+   - Trigger: `build` branch এ push অথবা version tag (`v*.*.*`)
+   - Actions: Release APK + AAB build, GitHub Release creation
+   - Outputs: Multiple APKs (split-per-abi) + AAB
+   - Artifacts: 30 days retention
 
-## 🤝 Contributing
+3. **Manual Build** ([manual_build.yml](.github/workflows/manual_build.yml))
 
-আমরা welcome করি contributions! অনুগ্রহ করে নিম্নলিখিত guidelines follow করুন:
+   - Trigger: Manual dispatch
+   - Options: Debug/Release, Split-per-ABI toggle
+   - Flexible testing builds
 
-### 🔄 Development Workflow
+4. **Security Scan** ([security_scan.yml](.github/workflows/security_scan.yml))
 
-1. **Fork & Clone**
+   - Trigger: Push, PR, weekly schedule
+   - Actions: Dependency audit, security analysis
+   - Reports: Analysis artifacts
 
-   ```bash
-   git clone https://github.com/your-username/binance_order_info.git
-   cd binance_order_info
-   ```
+### Release Process:
 
-2. **Create Feature Branch**
+```bash
+# Create a new release
+git tag v1.0.0
+git push origin v1.0.0
 
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
+# GitHub Actions automatically:
+# 1. Builds release APKs + AAB
+# 2. Creates GitHub Release
+# 3. Uploads all build artifacts
+# 4. Generates changelog
+```
 
-3. **Development Setup**
+## 📱 Build Manually
 
-   ```bash
-   flutter pub get
-   ```
+### Debug Build:
 
-4. **Code Quality Checks**
+```bash
+flutter build apk --debug
+```
 
-   ```bash
-   flutter analyze
-   dart format .
-   flutter test
-   ```
+### Release Build:
 
-5. **Commit & Push**
+```bash
+# Single APK (larger size, all architectures)
+flutter build apk --release
 
-   ```bash
-   git commit -m 'feat: Add amazing feature'
-   git push origin feature/amazing-feature
-   ```
+# Split APK per ABI (recommended, smaller sizes)
+flutter build apk --release --split-per-abi
 
-6. **Create Pull Request**
+# App Bundle for Play Store
+flutter build appbundle --release
+```
 
-### 📋 Contribution Guidelines
+## 🧪 Testing
 
-- Follow GetX state management pattern
-- Write clean, documented code
-- Use conventional commits format
-- Update documentation as needed
-- Ensure all CI checks pass
+```bash
+# Run all tests
+flutter test
 
-### 🐛 Bug Reports
+# Run tests with coverage
+flutter test --coverage
 
-আমাদের [issue template](https://github.com/royalcourtbd/binance_order_info/issues/new) ব্যবহার করুন:
-
-- Device information
-- Steps to reproduce
-- Expected vs actual behavior
-- Screenshots/logs if applicable
+# Analyze code
+flutter analyze
+```
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is private. All rights reserved.
 
-## 👨‍💻 Author & Team
+## 👤 Author
 
-**Royal Court BD** - Lead Developer & Maintainer
+**Your Name**
 
-- 🌐 GitHub: [@royalcourtbd](https://github.com/royalcourtbd)
-- 📧 Contact: [Create an issue](https://github.com/royalcourtbd/binance_order_info/issues) for support
-- 🔗 Project: Binance P2P Order Info
+- GitHub: [@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
 
-## 🙏 Acknowledgments
+## 🤝 Contributing
 
-- 💱 Binance for the P2P trading platform
-- 🔧 Flutter Team for the amazing framework
-- 🎨 Material Design for UI/UX guidelines
-- 🤝 Open Source Community for valuable packages
+Contributions, issues এবং feature requests welcome!
 
-## 🔖 Version History & Roadmap
+Pull request create করার আগে [PR Template](.github/pull_request_template.md) follow করুন।
 
-### Current Version
+## 📝 Changelog
 
-| Version | Status     | Notes           |
-| ------- | ---------- | --------------- |
-| v1.0.0  | 🚧 In Dev | Initial release |
+### v1.0.0 (Initial Release)
 
-### 🎯 Planned Features (Roadmap)
-
-- 📱 **v1.1.0**: Advanced filtering and search
-- 📊 **v1.2.0**: Charts and visual analytics
-- 💾 **v1.3.0**: Offline data persistence
-- 🔔 **v1.4.0**: Push notifications for new orders
-- 🌐 **v2.0.0**: Web dashboard
-
-### 📊 Development Stats
-
-- 📝 **Total Dart Files**: 20+
-- 🏗️ **Architecture**: MVC with GetX
-- 📦 **Dependencies**: 5 core packages
-- 🧪 **CI/CD Workflows**: 4 automated pipelines
-- 🔒 **Security Scans**: Weekly automated checks
-
-## 🚀 Getting Started Quickly
-
-```bash
-# Clone and setup in one go
-git clone https://github.com/royalcourtbd/binance_order_info.git
-cd binance_order_info
-flutter pub get
-flutter run
-```
-
-## 📞 Support & Community
-
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/royalcourtbd/binance_order_info/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/royalcourtbd/binance_order_info/discussions)
-- 🔔 **Updates**: Watch this repo for notifications
+- ✅ Completed orders list
+- ✅ Financial summary
+- ✅ Transaction details
+- ✅ Server IP configuration
+- ✅ Date-wise grouping
+- ✅ Modern UI with Material Design 3
 
 ---
 
-> 🎯 **Mission**: Simplifying Binance P2P trading analysis through technology. Built with ❤️ for traders and investors.
-
-⭐ Don't forget to star this repository if you find it helpful!
-
----
-
-**Note**: এই app শুধুমাত্র Binance P2P orders track করার জন্য। Trading বা order placement এর জন্য নয়।
+**Note**: এই app শুধু Binance P2P orders track করার জন্য। Trading বা order placement এর জন্য নয়।
