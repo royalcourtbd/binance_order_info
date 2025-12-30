@@ -58,13 +58,13 @@ class TransactionItemModel {
     if (cryptoAmount == null) return '0.00';
     final crypto = double.tryParse(cryptoAmount!) ?? 0.0;
     final fee = double.tryParse(commission ?? '0') ?? 0.0;
-    return (crypto - fee).toStringAsFixed(8);
+    return (crypto - fee).toStringAsFixed(2);
   }
 
   /// Returns the total quantity (base amount without commission calculation)
   String getTotalQuantity() {
     if (cryptoAmount == null) return '0.00';
-    return double.tryParse(cryptoAmount!)?.toStringAsFixed(8) ?? cryptoAmount!;
+    return double.tryParse(cryptoAmount!)?.toStringAsFixed(2) ?? cryptoAmount!;
   }
 
   factory TransactionItemModel.fromJson(Map<String, dynamic> json) {

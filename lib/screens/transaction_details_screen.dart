@@ -165,6 +165,13 @@ class TransactionDetailsScreen extends StatelessWidget {
                               'Total Quantity',
                               '${transaction.getTotalQuantity()} ${transaction.asset}',
                             ),
+                            if (transaction.unitPrice != null) ...[
+                              const SizedBox(height: 8),
+                              _buildAmountDetailRow(
+                                'Unit Price',
+                                '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
+                              ),
+                            ],
                             if (transaction.commission != null) ...[
                               const SizedBox(height: 8),
                               _buildAmountDetailRow(
@@ -184,6 +191,13 @@ class TransactionDetailsScreen extends StatelessWidget {
                               'Release Quantity',
                               '${transaction.getTotalQuantity()} ${transaction.asset}',
                             ),
+                            if (transaction.unitPrice != null) ...[
+                              const SizedBox(height: 8),
+                              _buildAmountDetailRow(
+                                'Unit Price',
+                                '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
+                              ),
+                            ],
                             if (transaction.commission != null) ...[
                               const SizedBox(height: 8),
                               _buildAmountDetailRow(
@@ -260,26 +274,6 @@ class TransactionDetailsScreen extends StatelessWidget {
                   if (transaction.asset != null) ...[
                     _buildDivider(),
                     _buildDetailRow('Asset', transaction.asset!),
-                  ],
-                  if (transaction.unitPrice != null) ...[
-                    _buildDivider(),
-                    _buildDetailRow(
-                      'Unit Price',
-                      '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
-                    ),
-                  ],
-                  _buildDivider(),
-                  _buildDetailRow(
-                    'Total Price',
-                    '${transaction.fiatSymbol ?? '৳'} ${double.tryParse(transaction.totalPrice)?.toStringAsFixed(2) ?? transaction.totalPrice}',
-                  ),
-                  if (transaction.commission != null) ...[
-                    _buildDivider(),
-                    _buildDetailRow(
-                      'Commission',
-                      '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission} ${transaction.asset ?? 'USDT'}',
-                      valueColor: Colors.orange,
-                    ),
                   ],
                   if (transaction.createTime != null) ...[
                     _buildDivider(),
