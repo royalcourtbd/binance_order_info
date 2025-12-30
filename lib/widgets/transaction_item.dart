@@ -66,7 +66,7 @@ class TransactionItem extends StatelessWidget {
                   if (transaction.cryptoAmount != null &&
                       transaction.asset != null)
                     Text(
-                      "${double.tryParse(transaction.cryptoAmount!)?.toStringAsFixed(2) ?? transaction.cryptoAmount} ${transaction.asset}",
+                      "${transaction.getDisplayCryptoAmount()} ${transaction.asset}",
                       textAlign: TextAlign.right,
                       style: const TextStyle(
                         color: Colors.black87,

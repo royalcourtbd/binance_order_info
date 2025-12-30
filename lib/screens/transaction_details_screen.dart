@@ -145,35 +145,54 @@ class TransactionDetailsScreen extends StatelessWidget {
                   ),
                   if (transaction.cryptoAmount != null &&
                       transaction.asset != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      child: Column(
                         children: [
-                          Text(
-                            'Amount: ',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
+                          if (transaction.category.toUpperCase() == 'BUY') ...[
+                            _buildAmountDetailRow(
+                              'Receive Quantity',
+                              '${transaction.getReceivedQuantity()} ${transaction.asset}',
+                              isHighlighted: true,
                             ),
-                          ),
-                          Text(
-                            '${double.tryParse(transaction.cryptoAmount!)?.toStringAsFixed(2) ?? transaction.cryptoAmount} ${transaction.asset}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w600,
+                            const SizedBox(height: 8),
+                            _buildAmountDetailRow(
+                              'Total Quantity',
+                              '${transaction.getTotalQuantity()} ${transaction.asset}',
                             ),
-                          ),
+                            if (transaction.commission != null) ...[
+                              const SizedBox(height: 8),
+                              _buildAmountDetailRow(
+                                'Fee',
+                                '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission} ${transaction.asset}',
+                                valueColor: Colors.orange,
+                              ),
+                            ],
+                          ] else ...[
+                            _buildAmountDetailRow(
+                              'Total Quantity',
+                              '${transaction.getDisplayCryptoAmount()} ${transaction.asset}',
+                              isHighlighted: true,
+                            ),
+                            const SizedBox(height: 8),
+                            _buildAmountDetailRow(
+                              'Release Quantity',
+                              '${transaction.getTotalQuantity()} ${transaction.asset}',
+                            ),
+                            if (transaction.commission != null) ...[
+                              const SizedBox(height: 8),
+                              _buildAmountDetailRow(
+                                'Fee',
+                                '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission} ${transaction.asset}',
+                                valueColor: Colors.orange,
+                              ),
+                            ],
+                          ],
                         ],
                       ),
                     ),
@@ -242,13 +261,6 @@ class TransactionDetailsScreen extends StatelessWidget {
                     _buildDivider(),
                     _buildDetailRow('Asset', transaction.asset!),
                   ],
-                  if (transaction.cryptoAmount != null) ...[
-                    _buildDivider(),
-                    _buildDetailRow(
-                      'Crypto Amount',
-                      '${double.tryParse(transaction.cryptoAmount!)?.toStringAsFixed(8) ?? transaction.cryptoAmount} ${transaction.asset ?? ''}',
-                    ),
-                  ],
                   if (transaction.unitPrice != null) ...[
                     _buildDivider(),
                     _buildDetailRow(
@@ -265,7 +277,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                     _buildDivider(),
                     _buildDetailRow(
                       'Commission',
-                      '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission}%',
+                      '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission} ${transaction.asset ?? 'USDT'}',
                       valueColor: Colors.orange,
                     ),
                   ],
@@ -294,6 +306,31 @@ class TransactionDetailsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAmountDetailRow(String label, String value,
+      {Color? valueColor, bool isHighlighted = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isHighlighted ? 14 : 13,
+            color: valueColor ?? (isHighlighted ? Colors.black87 : Colors.grey[700]),
+            fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 

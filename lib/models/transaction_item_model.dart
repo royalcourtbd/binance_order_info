@@ -35,6 +35,38 @@ class TransactionItemModel {
     this.additionalKycVerify,
   });
 
+  /// Returns the display crypto amount based on transaction type
+  /// BUY: Shows received amount (cryptoAmount - commission)
+  /// SELL: Shows total deducted amount (cryptoAmount + commission)
+  String getDisplayCryptoAmount() {
+    if (cryptoAmount == null) return '0.00';
+
+    final crypto = double.tryParse(cryptoAmount!) ?? 0.0;
+    final fee = double.tryParse(commission ?? '0') ?? 0.0;
+
+    if (category.toUpperCase() == 'BUY') {
+      // For BUY: Show received amount (what user actually gets)
+      return (crypto - fee).toStringAsFixed(2);
+    } else {
+      // For SELL: Show total deducted (what's taken from wallet)
+      return (crypto + fee).toStringAsFixed(2);
+    }
+  }
+
+  /// Returns the received quantity for BUY transactions
+  String getReceivedQuantity() {
+    if (cryptoAmount == null) return '0.00';
+    final crypto = double.tryParse(cryptoAmount!) ?? 0.0;
+    final fee = double.tryParse(commission ?? '0') ?? 0.0;
+    return (crypto - fee).toStringAsFixed(8);
+  }
+
+  /// Returns the total quantity (base amount without commission calculation)
+  String getTotalQuantity() {
+    if (cryptoAmount == null) return '0.00';
+    return double.tryParse(cryptoAmount!)?.toStringAsFixed(8) ?? cryptoAmount!;
+  }
+
   factory TransactionItemModel.fromJson(Map<String, dynamic> json) {
     // Safely parse createTime - handle different types
     int? createTime;
