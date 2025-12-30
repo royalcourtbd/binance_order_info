@@ -2,10 +2,6 @@ import 'package:binance_order_info/models/transaction_item_model.dart';
 import 'package:flutter/material.dart';
 
 class TransactionItem extends StatelessWidget {
-  // final String category;
-  // final String title;
-  // final String method;
-  // final String amount;
   final TransactionItemModel transaction;
 
   const TransactionItem({super.key, required this.transaction});
@@ -43,7 +39,7 @@ class TransactionItem extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Text(
-              "৳ ${transaction.amount}",
+              "৳ ${double.tryParse(transaction.amount)?.toStringAsFixed(2) ?? transaction.amount}",
               textAlign: TextAlign.right,
               style: TextStyle(
                 color: Colors.red,
