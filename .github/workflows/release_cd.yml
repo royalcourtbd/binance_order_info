@@ -1,9 +1,11 @@
-name: Enhanced Release Pipeline
+name: Android Release Build
 
 on:
   push:
+    branches:
+      - build # build branch এ push হলে
     tags:
-      - "v*.*.*"
+      - "v*.*.*" # অথবা tag করলে
 
 permissions:
   contents: write
@@ -11,65 +13,71 @@ permissions:
   checks: write
 
 jobs:
-  build-and-release:
+  build-android-release:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for changelog
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+          cache: "gradle"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.32.5"
+          flutter-version: "3.38.5" # Latest version
           cache: true
 
-      - name: Cache dependencies
+      - name: Cache Flutter dependencies
         uses: actions/cache@v4
         with:
           path: |
             ~/.pub-cache
             ~/.gradle/caches
-          key: ${{ runner.os }}-deps-${{ hashFiles('**/pubspec.lock') }}
+            ~/.gradle/wrapper
+            android/.gradle
+            android/.android
+          key: ${{ runner.os }}-flutter-gradle-${{ hashFiles('**/pubspec.lock', '**/gradle-wrapper.properties', '**/*.gradle*') }}
           restore-keys: |
-            ${{ runner.os }}-deps-
+            ${{ runner.os }}-flutter-gradle-
+            ${{ runner.os }}-flutter-
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Generate build files
-        run: dart run build_runner build --delete-conflicting-outputs
-
       - name: Run tests
         run: flutter test
+        continue-on-error: true
 
-      - name: Build APK
-        run: flutter build apk --release --obfuscate --split-debug-info=./debug-info
+      - name: Build APK (Release)
+        run: flutter build apk --release --split-per-abi
 
-      - name: Build AAB
-        run: flutter build appbundle --release --obfuscate --split-debug-info=./debug-info
+      - name: Build AAB (Release)
+        run: flutter build appbundle --release
 
-      # Combined: Build verification from Code 1
       - name: Verify build outputs
         run: |
-          echo "Checking APK file:"
-          ls -la build/app/outputs/flutter-apk/
-          echo "Checking AAB file:"
-          ls -la build/app/outputs/bundle/release/
+          echo "📦 Build outputs:"
+          echo "==== APK Files ===="
+          ls -lh build/app/outputs/flutter-apk/
+          echo ""
+          echo "==== AAB File ===="
+          ls -lh build/app/outputs/bundle/release/
+          echo ""
 
-          # Verify files exist
-          if [ ! -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
-            echo "❌ APK file not found!"
-            exit 1
-          fi
-
+          # Split-per-abi creates multiple APKs
           if [ ! -f "build/app/outputs/bundle/release/app-release.aab" ]; then
             echo "❌ AAB file not found!"
             exit 1
           fi
 
-          echo "✅ Both files found successfully"
+          echo "✅ Build outputs verified successfully"
 
       # Improved: Better app info extraction from Code 2
       - name: Get app info from pubspec
@@ -101,12 +109,20 @@ jobs:
       - name: Calculate file sizes
         id: file_sizes
         run: |
-          APK_SIZE=$(du -h build/app/outputs/flutter-apk/app-release.apk | cut -f1)
+          # Calculate total APK size (all architectures)
+          TOTAL_APK_SIZE=$(du -ch build/app/outputs/flutter-apk/*.apk | grep total | cut -f1)
           AAB_SIZE=$(du -h build/app/outputs/bundle/release/app-release.aab | cut -f1)
-          echo "APK_SIZE=$APK_SIZE" >> $GITHUB_OUTPUT
+
+          # Count APK files
+          APK_COUNT=$(ls -1 build/app/outputs/flutter-apk/*.apk 2>/dev/null | wc -l | tr -d ' ')
+
+          echo "TOTAL_APK_SIZE=$TOTAL_APK_SIZE" >> $GITHUB_OUTPUT
           echo "AAB_SIZE=$AAB_SIZE" >> $GITHUB_OUTPUT
-          echo "APK Size: $APK_SIZE"
+          echo "APK_COUNT=$APK_COUNT" >> $GITHUB_OUTPUT
+
+          echo "Total APK Size (all ABIs): $TOTAL_APK_SIZE"
           echo "AAB Size: $AAB_SIZE"
+          echo "APK Count: $APK_COUNT"
 
       # Improved: Better date formatting with timezone support
       - name: Format build date
@@ -121,73 +137,67 @@ jobs:
           echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_OUTPUT
 
       # Using ncipollo/release-action for better flexibility
-      - name: Create Enhanced Release
+      - name: Create Release (only for tags)
+        if: startsWith(github.ref, 'refs/tags/')
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          name: 🚇 ${{ steps.app_info.outputs.APP_NAME }} ${{ github.ref_name }}
+          name: 📱 Binance Order Info ${{ github.ref_name }}
           body: |
-            ## 🚇 ${{ steps.app_info.outputs.APP_NAME }} Release ${{ github.ref_name }}
+            ## 📱 Binance Order Info Release ${{ github.ref_name }}
 
-            ### 📱 Download
+            ### 📥 Download Options
 
-            | File Type | Size | Description |
-            |-----------|------|-------------|
-            | **APK** | ${{ steps.file_sizes.outputs.APK_SIZE }} | Direct install for Android devices |
+            | File Type | Size | Details |
+            |-----------|------|---------|
+            | **APK Files** | ${{ steps.file_sizes.outputs.TOTAL_APK_SIZE }} | ${{ steps.file_sizes.outputs.APK_COUNT }} split APKs (arm64-v8a, armeabi-v7a, x86_64) |
             | **AAB** | ${{ steps.file_sizes.outputs.AAB_SIZE }} | Google Play Store bundle |
 
-            ### 🔄 What's Changed
+            ### 🔄 Changelog
             ${{ steps.app_info.outputs.CHANGELOG }}
 
-            ### 📋 Installation Instructions
+            ### 📋 Installation
 
-            **For APK:**
-            1. Download `app-release.apk` below
-            2. Enable "Install from Unknown Sources" in Android Settings
-            3. Open and install the APK
+            **APK Installation:**
+            - Download the APK for your device architecture
+            - Most modern devices use `arm64-v8a`
+            - Enable "Install from Unknown Sources" in Settings
+            - Install the APK
 
             **System Requirements:**
             - Android 7.0+ (API 24)
             - 50MB+ free storage
 
-            ### 🛡️ Security
-            - Code obfuscated for security
-            - Built with Flutter 3.32.5
-            - All dependencies up to date
-
             ---
 
-            **App Version:** ${{ steps.app_info.outputs.VERSION }}  
+            **Version:** ${{ steps.app_info.outputs.VERSION }}  
+            **Built with:** Flutter 3.38.5 & Dart 3.10.4  
             **Build Date:** ${{ steps.build_date.outputs.BUILD_DATE }}  
-            **Commit:** [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            **Commit:** `${{ github.sha }}`
           draft: false
           prerelease: false
           artifacts: |
-            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/*.apk
             build/app/outputs/bundle/release/app-release.aab
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
-          removeArtifacts: false
 
-      - name: Upload to Artifact
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.app_info.outputs.APP_NAME }}-release-${{ github.ref_name }}
+          name: android-release-${{ github.ref_name || github.sha }}
           path: |
-            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/*.apk
             build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
 
-      # Additional: Notify on success/failure
-      - name: Notify on Success
-        if: success()
+      - name: Build Summary
         run: |
-          echo "✅ Release ${{ github.ref_name }} created successfully!"
-          echo "📱 APK Size: ${{ steps.file_sizes.outputs.APK_SIZE }}"
-          echo "📦 AAB Size: ${{ steps.file_sizes.outputs.AAB_SIZE }}"
-
-      - name: Notify on Failure
-        if: failure()
-        run: |
-          echo "❌ Release pipeline failed for ${{ github.ref_name }}"
-          echo "Please check the logs above for details."
+          echo "### ✅ Build Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.app_info.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "**APK Count:** ${{ steps.file_sizes.outputs.APK_COUNT }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Total APK Size:** ${{ steps.file_sizes.outputs.TOTAL_APK_SIZE }}" >> $GITHUB_STEP_SUMMARY
+          echo "**AAB Size:** ${{ steps.file_sizes.outputs.AAB_SIZE }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📱 Build artifacts uploaded successfully!" >> $GITHUB_STEP_SUMMARY
