@@ -11,7 +11,7 @@ class OrdersApiService {
     bool useCache = ApiConfig.defaultUseCache,
   }) async {
     try {
-      final url = ApiConfig.buildUrl(
+      final url = await ApiConfig.buildUrl(
         ApiConfig.completedOrdersEndpoint,
         days: days,
         useCache: useCache,
@@ -102,7 +102,7 @@ class OrdersApiService {
     bool useCache = ApiConfig.defaultUseCache,
   }) async {
     try {
-      final url = ApiConfig.buildUrl(
+      final url = await ApiConfig.buildUrl(
         ApiConfig.summaryEndpoint,
         days: days,
         useCache: useCache,

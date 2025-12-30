@@ -1,11 +1,9 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
 class ApiConfig {
-  // TODO: Replace with your local network IP address
-  // Find your IP:
-  //   Windows: ipconfig
-  //   Mac: ifconfig en0 | grep inet
-  //   Linux: ip addr show
-  // Example: http://192.168.1.100:8000
-  static const String baseUrl = 'http://192.168.0.101:8000';
+  static const String _ipKey = 'server_ip_address';
+  static const String _defaultIp = '192.168.0.101';
+  static const String _port = '8000';
 
   // API Endpoints
   static const String completedOrdersEndpoint = '/api/orders/completed';
@@ -16,16 +14,42 @@ class ApiConfig {
   static const int defaultDays = 30;
   static const bool defaultUseCache = true;
 
+  // Get current IP address from SharedPreferences
+  static Future<String> getIpAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_ipKey) ?? _defaultIp;
+  }
+
+  // Save IP address to SharedPreferences
+  static Future<void> setIpAddress(String ip) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_ipKey, ip);
+  }
+
+  // Get base URL with current IP
+  static Future<String> getBaseUrl() async {
+    final ip = await getIpAddress();
+    return 'http://$ip:$_port';
+  }
+
   // Full URLs
-  static String get completedOrdersUrl => '$baseUrl$completedOrdersEndpoint';
-  static String get summaryUrl => '$baseUrl$summaryEndpoint';
+  static Future<String> getCompletedOrdersUrl() async {
+    final baseUrl = await getBaseUrl();
+    return '$baseUrl$completedOrdersEndpoint';
+  }
+
+  static Future<String> getSummaryUrl() async {
+    final baseUrl = await getBaseUrl();
+    return '$baseUrl$summaryEndpoint';
+  }
 
   // Build URL with query parameters
-  static String buildUrl(
+  static Future<String> buildUrl(
     String endpoint, {
     int days = defaultDays,
     bool useCache = defaultUseCache,
-  }) {
+  }) async {
+    final baseUrl = await getBaseUrl();
     final uri = Uri.parse('$baseUrl$endpoint').replace(
       queryParameters: {
         'days': days.toString(),
