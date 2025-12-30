@@ -2,8 +2,8 @@
 
 একটি Flutter-based Android অ্যাপ্লিকেশন যা Binance P2P trading orders track করে এবং detailed analytics প্রদান করে। এই app আপনার completed buy/sell orders দেখাবে এবং profit/loss calculation সহ comprehensive summary প্রদান করবে।
 
-[![Flutter CI](https://github.com/YOUR_USERNAME/binance_order_info/actions/workflows/flutter_ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/binance_order_info/actions/workflows/flutter_ci.yml)
-[![Release CD](https://github.com/YOUR_USERNAME/binance_order_info/actions/workflows/release_cd.yml/badge.svg)](https://github.com/YOUR_USERNAME/binance_order_info/actions/workflows/release_cd.yml)
+[![Flutter CI](https://github.com/royalcourtbd/binance_order_info/actions/workflows/flutter_ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/binance_order_info/actions/workflows/flutter_ci.yml)
+[![Release CD](https://github.com/royalcourtbd/binance_order_info/actions/workflows/release_cd.yml/badge.svg)](https://github.com/YOUR_USERNAME/binance_order_info/actions/workflows/release_cd.yml)
 
 ## ✨ Features
 
@@ -96,7 +96,7 @@ App settings icon থেকে custom server IP configure করতে পার
 
 Latest stable version download করতে:
 
-1. [Releases page](https://github.com/YOUR_USERNAME/binance_order_info/releases) এ যান
+1. [Releases page](https://github.com/royalcourtbd/binance_order_info/releases) এ যান
 2. Latest release select করুন
 3. **Assets** section থেকে আপনার device এর জন্য appropriate APK download করুন:
    - `app-arm64-v8a-release.apk` - বেশিরভাগ modern Android devices (64-bit)
