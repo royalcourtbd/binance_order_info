@@ -1,6 +1,6 @@
 # Binance P2P Order Info 💰
 
-[![Flutter CI](https://github.com/royalcourtbd/binance_order_info/actions/workflows/flutter_ci.yml/badge.svg)](https://github.com/royalcourtbd/binance_order_info/actions/workflows/flutter_ci.yml)
+[![Flutter CI](https://github.com/royalcourtbd/binance_order_info/actions/workflows/ci_validation.yml/badge.svg)](https://github.com/royalcourtbd/binance_order_info/actions/workflows/flutter_ci.yml)
 [![Release CD](https://github.com/royalcourtbd/binance_order_info/actions/workflows/release_cd.yml/badge.svg)](https://github.com/royalcourtbd/binance_order_info/actions/workflows/release_cd.yml)
 [![Security Scan](https://github.com/royalcourtbd/binance_order_info/actions/workflows/security_scan.yml/badge.svg)](https://github.com/royalcourtbd/binance_order_info/actions/workflows/security_scan.yml)
 [![Manual Build](https://github.com/royalcourtbd/binance_order_info/actions/workflows/manual_build.yml/badge.svg)](https://github.com/royalcourtbd/binance_order_info/actions/workflows/manual_build.yml)
