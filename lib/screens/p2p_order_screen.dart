@@ -25,19 +25,18 @@ class _P2POrderScreenState extends State<P2POrderScreen> {
     // Initialize PageController
     _pageController = PageController(initialPage: 0);
 
-    // When data loads, jump to current month
-    ever(controller.monthSections, (_) {
+    // When data loads for the FIRST TIME, jump to current month
+    // Using 'once' instead of 'ever' so it only triggers on first data load
+    once(controller.monthSections, (_) {
       if (controller.monthSections.isNotEmpty && _pageController.hasClients) {
         final currentMonthPage = controller.getCurrentMonthIndex();
-        if (currentMonthPage != _currentPageIndex.value) {
-          // Jump to current month instantly (only on first load)
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_pageController.hasClients) {
-              _pageController.jumpToPage(currentMonthPage);
-              _currentPageIndex.value = currentMonthPage;
-            }
-          });
-        }
+        // Jump to current month instantly (only on first load)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients) {
+            _pageController.jumpToPage(currentMonthPage);
+            _currentPageIndex.value = currentMonthPage;
+          }
+        });
       }
     });
   }
