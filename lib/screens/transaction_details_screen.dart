@@ -1,6 +1,9 @@
 import 'package:binance_order_info/models/transaction_item_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
+import '../controllers/orders_controller.dart';
+import '../widgets/manual_charge_dialog.dart';
 
 class TransactionDetailsScreen extends StatelessWidget {
   final TransactionItemModel transaction;
@@ -11,6 +14,7 @@ class TransactionDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isBuy = transaction.category.toUpperCase() == 'BUY';
     final transactionColor = isBuy ? Colors.blue : Colors.red;
+    final controller = Get.find<OrdersController>();
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -22,6 +26,14 @@ class TransactionDetailsScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        actions: [
+          // Edit button to add/edit manual charge
+          IconButton(
+            icon: const Icon(Icons.edit_note),
+            tooltip: 'Edit Manual Charge',
+            onPressed: () => _showManualChargeDialog(context, controller),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -180,6 +192,14 @@ class TransactionDetailsScreen extends StatelessWidget {
                                 valueColor: Colors.orange,
                               ),
                             ],
+                            if (transaction.manualCharge != null) ...[
+                              const SizedBox(height: 8),
+                              _buildAmountDetailRow(
+                                'Manual Charge',
+                                '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
+                                valueColor: Colors.deepOrange,
+                              ),
+                            ],
                           ] else ...[
                             _buildAmountDetailRow(
                               'Total Quantity',
@@ -204,6 +224,14 @@ class TransactionDetailsScreen extends StatelessWidget {
                                 'Fee',
                                 '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission} ${transaction.asset}',
                                 valueColor: Colors.orange,
+                              ),
+                            ],
+                            if (transaction.manualCharge != null) ...[
+                              const SizedBox(height: 8),
+                              _buildAmountDetailRow(
+                                'Manual Charge',
+                                '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
+                                valueColor: Colors.deepOrange,
                               ),
                             ],
                           ],
@@ -412,6 +440,51 @@ class TransactionDetailsScreen extends StatelessWidget {
         return Colors.red;
       default:
         return Colors.grey;
+    }
+  }
+
+  /// Show dialog to add/edit manual charge
+  void _showManualChargeDialog(
+      BuildContext context, OrdersController controller) async {
+    final isBuy = transaction.category.toUpperCase() == 'BUY';
+    final orderNumber = transaction.title.replaceFirst('#', '');
+
+    final result = await showDialog(
+      context: context,
+      builder: (context) => ManualChargeDialog(
+        isBuy: isBuy,
+        currentCharge: transaction.manualCharge,
+      ),
+    );
+
+    if (result == null) return; // User cancelled
+
+    if (result == 'remove') {
+      // Remove the manual charge
+      final success = await controller.removeManualCharge(orderNumber);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Manual charge removed successfully'
+                : 'Failed to remove manual charge'),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    } else if (result is double) {
+      // Save the manual charge
+      final success = await controller.saveManualCharge(orderNumber, result);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Manual charge saved successfully'
+                : 'Failed to save manual charge'),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
     }
   }
 }

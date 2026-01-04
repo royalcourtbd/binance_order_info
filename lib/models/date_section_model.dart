@@ -22,16 +22,20 @@ class DateSectionModel {
     DateTime dateTime,
     List<TransactionItemModel> transactions,
   ) {
-    // Calculate daily buy and sell totals
+    // Calculate daily buy and sell totals (including manual charges)
     double totalBuy = 0.0;
     double totalSell = 0.0;
 
     for (var transaction in transactions) {
       final amount = double.tryParse(transaction.amount) ?? 0.0;
+      final manualCharge = transaction.manualCharge ?? 0.0;
+
       if (transaction.category.toUpperCase() == 'BUY') {
-        totalBuy += amount;
+        // For BUY: add base amount + manual charge (extra cost)
+        totalBuy += amount + manualCharge;
       } else if (transaction.category.toUpperCase() == 'SELL') {
-        totalSell += amount;
+        // For SELL: add base amount + manual charge (extra income)
+        totalSell += amount + manualCharge;
       }
     }
 

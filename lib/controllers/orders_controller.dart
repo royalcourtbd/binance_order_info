@@ -5,9 +5,11 @@ import '../models/date_section_model.dart';
 import '../models/transaction_item_model.dart';
 import '../models/api_response_model.dart';
 import '../services/orders_api_service.dart';
+import '../services/manual_charge_service.dart';
 
 class OrdersController extends GetxController {
   final OrdersApiService _apiService = OrdersApiService();
+  final ManualChargeService _chargeService = ManualChargeService();
 
   // Observable state
   final RxList<DateSectionModel> dateSections = <DateSectionModel>[].obs;
@@ -41,13 +43,26 @@ class OrdersController extends GetxController {
 
     if (response.success && response.data != null) {
       try {
+        // Load manual charges from storage
+        final manualCharges = await _chargeService.getAllCharges();
+
         // Parse JSON to TransactionItemModel objects with error handling
         final List<TransactionItemModel> transactions = [];
         final ordersList = response.data as List;
 
         for (int i = 0; i < ordersList.length; i++) {
           try {
-            final transaction = TransactionItemModel.fromJson(ordersList[i]);
+            final json = ordersList[i];
+            final orderNumber = json['orderNumber']?.toString() ?? '';
+
+            // Get manual charge for this order (if exists)
+            final manualCharge = manualCharges[orderNumber];
+
+            // Add manual charge to the JSON before creating the model
+            final transaction = TransactionItemModel.fromJson({
+              ...json,
+              'manualCharge': manualCharge,
+            });
             transactions.add(transaction);
           } catch (e, stackTrace) {
             log('🔍 Stack trace: $stackTrace');
@@ -70,7 +85,9 @@ class OrdersController extends GetxController {
     final response = await _apiService.getSummary(days: days);
 
     if (response.success && response.data != null) {
-      summary.value = response.data!;
+      // Adjust summary to include manual charges
+      final adjustedSummary = await _adjustSummaryWithManualCharges(response.data!);
+      summary.value = adjustedSummary;
     } else {
       // Don't override error message if orders fetch already failed
       if (errorMessage.value.isEmpty) {
@@ -79,8 +96,78 @@ class OrdersController extends GetxController {
     }
   }
 
+  /// Adjust summary to include manual charges from local storage
+  Future<SummaryResponse> _adjustSummaryWithManualCharges(
+      SummaryResponse apiSummary) async {
+    final manualCharges = await _chargeService.getAllCharges();
+
+    double totalBuyCharges = 0.0;
+    double totalSellCharges = 0.0;
+
+    // Sum up all manual charges for buy and sell transactions
+    // We need to iterate through transactions to know which type each order is
+    for (final section in dateSections) {
+      for (final transaction in section.transactions) {
+        final orderNumber = transaction.title.replaceFirst('#', '');
+        final charge = manualCharges[orderNumber];
+
+        if (charge != null) {
+          if (transaction.category.toUpperCase() == 'BUY') {
+            totalBuyCharges += charge;
+          } else if (transaction.category.toUpperCase() == 'SELL') {
+            totalSellCharges += charge;
+          }
+        }
+      }
+    }
+
+    // Adjust the buy and sell values with manual charges
+    final adjustedBuyValue = apiSummary.totalBuyValue + totalBuyCharges;
+    final adjustedSellValue = apiSummary.totalSellValue + totalSellCharges;
+
+    // Recalculate profit: profit = sell - buy
+    final adjustedProfit = adjustedSellValue - adjustedBuyValue;
+
+    return SummaryResponse(
+      totalBuyOrders: apiSummary.totalBuyOrders,
+      totalSellOrders: apiSummary.totalSellOrders,
+      totalCompletedOrders: apiSummary.totalCompletedOrders,
+      totalBuyAmount: apiSummary.totalBuyAmount,
+      totalSellAmount: apiSummary.totalSellAmount,
+      totalBuyValue: adjustedBuyValue,
+      totalSellValue: adjustedSellValue,
+      totalBuyFees: apiSummary.totalBuyFees,
+      totalSellFees: apiSummary.totalSellFees,
+      totalFees: apiSummary.totalFees,
+      averageBuyPrice: apiSummary.averageBuyPrice,
+      averageSellPrice: apiSummary.averageSellPrice,
+      netProfitBdt: adjustedProfit,
+      netProfitPercentage: adjustedBuyValue > 0
+          ? (adjustedProfit / adjustedBuyValue) * 100
+          : 0.0,
+    );
+  }
+
   Future<void> refreshOrders() async {
     await fetchOrders();
+  }
+
+  /// Save manual charge for a specific order and refresh the data
+  Future<bool> saveManualCharge(String orderNumber, double charge) async {
+    final success = await _chargeService.saveManualCharge(orderNumber, charge);
+    if (success) {
+      await refreshOrders();
+    }
+    return success;
+  }
+
+  /// Remove manual charge for a specific order and refresh the data
+  Future<bool> removeManualCharge(String orderNumber) async {
+    final success = await _chargeService.removeManualCharge(orderNumber);
+    if (success) {
+      await refreshOrders();
+    }
+    return success;
   }
 
   List<DateSectionModel> _groupTransactionsByDate(

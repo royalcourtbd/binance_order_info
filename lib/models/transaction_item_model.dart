@@ -15,6 +15,7 @@ class TransactionItemModel {
   final String? commission;
   final String? counterPartNickName;
   final bool? additionalKycVerify;
+  final double? manualCharge; // Manual charge in BDT (extra cost for BUY, extra income for SELL)
 
   TransactionItemModel({
     required this.category,
@@ -33,6 +34,7 @@ class TransactionItemModel {
     this.commission,
     this.counterPartNickName,
     this.additionalKycVerify,
+    this.manualCharge,
   });
 
   /// Returns the display crypto amount based on transaction type
@@ -86,6 +88,12 @@ class TransactionItemModel {
 
     final totalPriceValue = json['totalPrice']?.toString() ?? '0.00';
 
+    // Parse manual charge if provided
+    double? manualCharge;
+    if (json['manualCharge'] != null) {
+      manualCharge = (json['manualCharge'] as num).toDouble();
+    }
+
     return TransactionItemModel(
       category: json['tradeType'] ?? 'UNKNOWN',
       title: '#${json['orderNumber'] ?? ''}',
@@ -103,6 +111,7 @@ class TransactionItemModel {
       commission: json['commission']?.toString(),
       counterPartNickName: json['counterPartNickName'],
       additionalKycVerify: json['additionalKycVerify'],
+      manualCharge: manualCharge,
     );
   }
 }
