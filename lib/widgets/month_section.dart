@@ -52,10 +52,19 @@ class MonthSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '৳ ${model.monthBuyWithCharge}',
+                        '${model.monthBuyUsdt} USDT',
                         style: const TextStyle(
                           color: Colors.blue,
                           fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '৳ ${model.monthBuyWithCharge}',
+                        style: const TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
                       ),
@@ -83,10 +92,19 @@ class MonthSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '৳ ${model.monthSellWithCharge}',
+                        '${model.monthSellUsdt} USDT',
                         style: const TextStyle(
                           color: Colors.red,
                           fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '৳ ${model.monthSellWithCharge}',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
                       ),

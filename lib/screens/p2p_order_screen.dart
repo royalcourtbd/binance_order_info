@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import '../controllers/orders_controller.dart';
-import '../widgets/summary_item.dart';
 import '../widgets/month_section.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
@@ -112,133 +110,32 @@ class _P2POrderScreenState extends State<P2POrderScreen> {
         }
 
         // Success state with data
-        return Column(
-          children: [
-            // Top Summary Header
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SummaryItem(
-                    label: "Buy",
-                    totalAmountUsdt: _formatAmount(
-                      controller.summary.value.totalBuyAmount,
-                    ),
-                    totalAmountBdt: _formatAmount(
-                      controller.summary.value.totalBuyValue,
-                    ),
-                    color: Colors.blue,
-                  ),
-                  SummaryItem(
-                    label: "Sell",
-                    totalAmountUsdt: _formatAmount(
-                      controller.summary.value.totalSellAmount,
-                    ),
-                    totalAmountBdt: _formatAmount(
-                      controller.summary.value.totalSellValue,
-                    ),
-                    color: Colors.red,
-                  ),
-
-                  SummaryItem(
-                    label: "Profit",
-                    totalAmountUsdt: _formatAmount(
-                      controller.summary.value.netProfitBdt,
-                    ),
-                    color: controller.summary.value.netProfitBdt >= 0
-                        ? Colors.green
-                        : Colors.red,
+        return RefreshIndicator(
+          onRefresh: () => controller.refreshOrders(),
+          child: Obx(() {
+            if (controller.monthSections.isEmpty) {
+              return ListView(
+                children: const [
+                  SizedBox(
+                    height: 200,
+                    child: Center(child: Text('No data')),
                   ),
                 ],
-              ),
-            ),
-
-            // Month indicator with navigation
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Obx(() {
-                if (controller.monthSections.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: _currentPageIndex.value < controller.monthSections.length - 1
-                          ? () {
-                              _pageController.nextPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            }
-                          : null,
-                    ),
-                    Obx(() => Text(
-                      _currentPageIndex.value < controller.monthSections.length
-                          ? controller.monthSections[_currentPageIndex.value].monthName
-                          : '',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    )),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: _currentPageIndex.value > 0
-                          ? () {
-                              _pageController.previousPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            }
-                          : null,
-                    ),
-                  ],
-                );
-              }),
-            ),
-
-            // Monthly PageView with pull-to-refresh
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => controller.refreshOrders(),
-                child: Obx(() {
-                  if (controller.monthSections.isEmpty) {
-                    return ListView(
-                      children: const [
-                        SizedBox(
-                          height: 200,
-                          child: Center(child: Text('No data')),
-                        ),
-                      ],
-                    );
-                  }
-                  return PageView.builder(
-                    controller: _pageController,
-                    itemCount: controller.monthSections.length,
-                    onPageChanged: (index) {
-                      _currentPageIndex.value = index;
-                    },
-                    itemBuilder: (context, index) {
-                      return MonthSection(model: controller.monthSections[index]);
-                    },
-                  );
-                }),
-              ),
-            ),
-          ],
+              );
+            }
+            return PageView.builder(
+              controller: _pageController,
+              itemCount: controller.monthSections.length,
+              onPageChanged: (index) {
+                _currentPageIndex.value = index;
+              },
+              itemBuilder: (context, index) {
+                return MonthSection(model: controller.monthSections[index]);
+              },
+            );
+          }),
         );
       }),
     );
-  }
-
-  String _formatAmount(double amount) {
-    final formatter = NumberFormat('#,##0.00');
-    return formatter.format(amount);
   }
 }

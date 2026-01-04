@@ -5,10 +5,12 @@ class MonthSectionModel {
   final String monthName; // "January 2026"
   final String month; // "01"
   final String year; // "2026"
-  final String monthBuy; // Total buy for the month without manual charges
-  final String monthSell; // Total sell for the month without manual charges
-  final String monthBuyWithCharge; // Total buy with manual charges
-  final String monthSellWithCharge; // Total sell with manual charges
+  final String monthBuy; // Total buy BDT for the month without manual charges
+  final String monthSell; // Total sell BDT for the month without manual charges
+  final String monthBuyWithCharge; // Total buy BDT with manual charges
+  final String monthSellWithCharge; // Total sell BDT with manual charges
+  final String monthBuyUsdt; // Total buy USDT for the month
+  final String monthSellUsdt; // Total sell USDT for the month
   final List<DateSectionModel> dateSections;
 
   MonthSectionModel({
@@ -19,6 +21,8 @@ class MonthSectionModel {
     required this.monthSell,
     required this.monthBuyWithCharge,
     required this.monthSellWithCharge,
+    required this.monthBuyUsdt,
+    required this.monthSellUsdt,
     required this.dateSections,
   });
 
@@ -31,12 +35,24 @@ class MonthSectionModel {
     double totalSell = 0.0;
     double totalBuyWithCharge = 0.0;
     double totalSellWithCharge = 0.0;
+    double totalBuyUsdt = 0.0;
+    double totalSellUsdt = 0.0;
 
     for (var dateSection in dateSections) {
       totalBuy += double.tryParse(dateSection.dayBuy) ?? 0.0;
       totalSell += double.tryParse(dateSection.daySell) ?? 0.0;
       totalBuyWithCharge += double.tryParse(dateSection.dayBuyWithCharge) ?? 0.0;
       totalSellWithCharge += double.tryParse(dateSection.daySellWithCharge) ?? 0.0;
+
+      // Calculate USDT totals from transactions
+      for (var transaction in dateSection.transactions) {
+        final usdtAmount = double.tryParse(transaction.cryptoAmount ?? '0') ?? 0.0;
+        if (transaction.category.toUpperCase() == 'BUY') {
+          totalBuyUsdt += usdtAmount;
+        } else if (transaction.category.toUpperCase() == 'SELL') {
+          totalSellUsdt += usdtAmount;
+        }
+      }
     }
 
     return MonthSectionModel(
@@ -47,6 +63,8 @@ class MonthSectionModel {
       monthSell: totalSell.toStringAsFixed(2),
       monthBuyWithCharge: totalBuyWithCharge.toStringAsFixed(2),
       monthSellWithCharge: totalSellWithCharge.toStringAsFixed(2),
+      monthBuyUsdt: totalBuyUsdt.toStringAsFixed(2),
+      monthSellUsdt: totalSellUsdt.toStringAsFixed(2),
       dateSections: dateSections,
     );
   }
