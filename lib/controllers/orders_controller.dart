@@ -170,6 +170,19 @@ class OrdersController extends GetxController {
     return success;
   }
 
+  /// Get a specific transaction by order number (for real-time updates in details page)
+  TransactionItemModel? getTransactionByOrderNumber(String orderNumber) {
+    for (final section in dateSections) {
+      for (final transaction in section.transactions) {
+        final txOrderNumber = transaction.title.replaceFirst('#', '');
+        if (txOrderNumber == orderNumber) {
+          return transaction;
+        }
+      }
+    }
+    return null;
+  }
+
   List<DateSectionModel> _groupTransactionsByDate(
     List<TransactionItemModel> transactions,
   ) {

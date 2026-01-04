@@ -12,9 +12,8 @@ class TransactionDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isBuy = transaction.category.toUpperCase() == 'BUY';
-    final transactionColor = isBuy ? Colors.blue : Colors.red;
     final controller = Get.find<OrdersController>();
+    final orderNumber = transaction.title.replaceFirst('#', '');
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -35,7 +34,21 @@ class TransactionDetailsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Obx(() {
+        // Get the latest transaction data from controller
+        final currentTransaction =
+            controller.getTransactionByOrderNumber(orderNumber) ?? transaction;
+
+        return _buildBody(context, currentTransaction, controller);
+      }),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, TransactionItemModel transaction, OrdersController controller) {
+    final isBuy = transaction.category.toUpperCase() == 'BUY';
+    final transactionColor = isBuy ? Colors.blue : Colors.red;
+
+    return SingleChildScrollView(
         child: Column(
           children: [
             // Header Section - Transaction Type Badge
@@ -327,8 +340,7 @@ class TransactionDetailsScreen extends StatelessWidget {
             const SizedBox(height: 24),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildAmountDetailRow(String label, String value,
