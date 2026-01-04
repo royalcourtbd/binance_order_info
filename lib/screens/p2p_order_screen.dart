@@ -3,16 +3,52 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/orders_controller.dart';
 import '../widgets/summary_item.dart';
-import '../widgets/date_section.dart';
+import '../widgets/month_section.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/ip_config_dialog.dart';
 
-class P2POrderScreen extends StatelessWidget {
-  P2POrderScreen({super.key});
+class P2POrderScreen extends StatefulWidget {
+  const P2POrderScreen({super.key});
 
+  @override
+  State<P2POrderScreen> createState() => _P2POrderScreenState();
+}
+
+class _P2POrderScreenState extends State<P2POrderScreen> {
   final OrdersController controller = Get.put(OrdersController());
+  late PageController _pageController;
+  final RxInt _currentPageIndex = 0.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize PageController
+    _pageController = PageController(initialPage: 0);
+
+    // When data loads, jump to current month
+    ever(controller.monthSections, (_) {
+      if (controller.monthSections.isNotEmpty && _pageController.hasClients) {
+        final currentMonthPage = controller.getCurrentMonthIndex();
+        if (currentMonthPage != _currentPageIndex.value) {
+          // Jump to current month instantly (only on first load)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_pageController.hasClients) {
+              _pageController.jumpToPage(currentMonthPage);
+              _currentPageIndex.value = currentMonthPage;
+            }
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,13 +93,13 @@ class P2POrderScreen extends StatelessWidget {
       ),
       body: Obx(() {
         // Loading state
-        if (controller.isLoading.value && controller.dateSections.isEmpty) {
+        if (controller.isLoading.value && controller.monthSections.isEmpty) {
           return const LoadingWidget(message: 'Fetching orders from API...');
         }
 
         // Error state
         if (controller.errorMessage.isNotEmpty &&
-            controller.dateSections.isEmpty) {
+            controller.monthSections.isEmpty) {
           return ErrorDisplayWidget(
             message: controller.errorMessage.value,
             onRetry: () => controller.refreshOrders(),
@@ -71,7 +107,7 @@ class P2POrderScreen extends StatelessWidget {
         }
 
         // Empty state
-        if (controller.dateSections.isEmpty) {
+        if (controller.monthSections.isEmpty) {
           return const EmptyStateWidget();
         }
 
@@ -121,16 +157,78 @@ class P2POrderScreen extends StatelessWidget {
               ),
             ),
 
-            // Transaction List with pull-to-refresh
+            // Month indicator with navigation
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Obx(() {
+                if (controller.monthSections.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: _currentPageIndex.value < controller.monthSections.length - 1
+                          ? () {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          : null,
+                    ),
+                    Obx(() => Text(
+                      _currentPageIndex.value < controller.monthSections.length
+                          ? controller.monthSections[_currentPageIndex.value].monthName
+                          : '',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: _currentPageIndex.value > 0
+                          ? () {
+                              _pageController.previousPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          : null,
+                    ),
+                  ],
+                );
+              }),
+            ),
+
+            // Monthly PageView with pull-to-refresh
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () => controller.refreshOrders(),
-                child: ListView.builder(
-                  itemCount: controller.dateSections.length,
-                  itemBuilder: (context, index) {
-                    return DateSection(model: controller.dateSections[index]);
-                  },
-                ),
+                child: Obx(() {
+                  if (controller.monthSections.isEmpty) {
+                    return ListView(
+                      children: const [
+                        SizedBox(
+                          height: 200,
+                          child: Center(child: Text('No data')),
+                        ),
+                      ],
+                    );
+                  }
+                  return PageView.builder(
+                    controller: _pageController,
+                    itemCount: controller.monthSections.length,
+                    onPageChanged: (index) {
+                      _currentPageIndex.value = index;
+                    },
+                    itemBuilder: (context, index) {
+                      return MonthSection(model: controller.monthSections[index]);
+                    },
+                  );
+                }),
               ),
             ),
           ],

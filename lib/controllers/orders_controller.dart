@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:get/get.dart';
 import '../models/date_section_model.dart';
+import '../models/month_section_model.dart';
 import '../models/transaction_item_model.dart';
 import '../models/api_response_model.dart';
 import '../services/orders_api_service.dart';
@@ -13,12 +14,13 @@ class OrdersController extends GetxController {
 
   // Observable state
   final RxList<DateSectionModel> dateSections = <DateSectionModel>[].obs;
+  final RxList<MonthSectionModel> monthSections = <MonthSectionModel>[].obs;
   final Rx<SummaryResponse> summary = SummaryResponse.empty().obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
-  // Fixed to 30 days (no filter needed)
-  final int days = 30;
+  // Changed to 90 days for last 3 months data
+  final int days = 90;
 
   @override
   void onInit() {
@@ -72,6 +74,9 @@ class OrdersController extends GetxController {
 
         // Group transactions by date
         dateSections.value = _groupTransactionsByDate(transactions);
+
+        // Group date sections by month for PageView
+        monthSections.value = _groupDateSectionsByMonth(dateSections);
       } catch (e, stackTrace) {
         log('🔍 Stack trace: $stackTrace');
         errorMessage.value = 'Error processing orders: $e';
@@ -229,5 +234,63 @@ class OrdersController extends GetxController {
     });
 
     return sections;
+  }
+
+  /// Group date sections by month for PageView
+  List<MonthSectionModel> _groupDateSectionsByMonth(
+    List<DateSectionModel> dateSections,
+  ) {
+    // Group date sections by year-month
+    final Map<String, List<DateSectionModel>> grouped = {};
+
+    for (var dateSection in dateSections) {
+      // Extract year and month from the year field (format: "MM.yyyy")
+      final monthKey = '${dateSection.year.split('.')[1]}-${dateSection.year.split('.')[0]}'; // "yyyy-MM"
+
+      if (!grouped.containsKey(monthKey)) {
+        grouped[monthKey] = [];
+      }
+      grouped[monthKey]!.add(dateSection);
+    }
+
+    // Convert to MonthSectionModel list
+    final List<MonthSectionModel> sections = [];
+    grouped.forEach((monthKey, dateSectionList) {
+      // Parse monthKey "yyyy-MM" to DateTime (first day of month)
+      final parts = monthKey.split('-');
+      final monthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), 1);
+
+      sections.add(
+        MonthSectionModel.fromDateSections(monthDate, dateSectionList),
+      );
+    });
+
+    // Sort by month descending (newest first)
+    sections.sort((a, b) {
+      final dateA = DateTime(int.parse(a.year), int.parse(a.month), 1);
+      final dateB = DateTime(int.parse(b.year), int.parse(b.month), 1);
+      return dateB.compareTo(dateA);
+    });
+
+    return sections;
+  }
+
+  /// Get the index of the current month in monthSections (for initial PageView page)
+  int getCurrentMonthIndex() {
+    if (monthSections.isEmpty) return 0;
+
+    final now = DateTime.now();
+    final currentMonthKey = '${now.month.toString().padLeft(2, '0')}-${now.year}';
+
+    for (int i = 0; i < monthSections.length; i++) {
+      final section = monthSections[i];
+      final sectionKey = '${section.month}-${section.year}';
+      if (sectionKey == currentMonthKey) {
+        return i;
+      }
+    }
+
+    // If current month not found, return 0 (latest month)
+    return 0;
   }
 }

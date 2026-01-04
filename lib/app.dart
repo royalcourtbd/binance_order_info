@@ -10,7 +10,7 @@ class BinanceP2PApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(useMaterial3: true),
-      home: P2POrderScreen(),
+      home: const P2POrderScreen(),
     );
   }
 }
