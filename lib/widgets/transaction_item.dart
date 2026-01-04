@@ -83,7 +83,7 @@ class TransactionItem extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  if (transaction.actualRate > 0)
+                  if (transaction.actualRate > 0 && transaction.manualCharge != null)
                     Text(
                       "@${transaction.actualRate.toStringAsFixed(2)}",
                       textAlign: TextAlign.right,
