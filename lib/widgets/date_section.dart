@@ -48,20 +48,52 @@ class DateSection extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Text(
-                "৳ ${model.dayBuy}",
-                style: const TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.w500,
-                ),
+              // Buy column
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "৳ ${model.dayBuyWithCharge}",
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (model.dayBuy != model.dayBuyWithCharge)
+                    Text(
+                      "৳ ${model.dayBuy}",
+                      style: TextStyle(
+                        color: Colors.blue.withValues(alpha: 0.6),
+                        fontSize: 11,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: 20),
-              Text(
-                "৳ ${model.daySell}",
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w500,
-                ),
+              // Sell column
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "৳ ${model.daySellWithCharge}",
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (model.daySell != model.daySellWithCharge)
+                    Text(
+                      "৳ ${model.daySell}",
+                      style: TextStyle(
+                        color: Colors.red.withValues(alpha: 0.6),
+                        fontSize: 11,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
