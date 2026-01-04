@@ -272,7 +272,55 @@ class OrdersController extends GetxController {
       return dateB.compareTo(dateA);
     });
 
-    return sections;
+    return _applyMonthlyProfitFallback(sections);
+  }
+
+  List<MonthSectionModel> _applyMonthlyProfitFallback(
+    List<MonthSectionModel> sections,
+  ) {
+    if (sections.isEmpty) return sections;
+
+    final List<MonthSectionModel> updated = [];
+
+    for (int i = 0; i < sections.length; i++) {
+      final current = sections[i];
+      final currentBuyUsdt = double.tryParse(current.monthBuyUsdt) ?? 0.0;
+      final currentSellUsdt = double.tryParse(current.monthSellUsdt) ?? 0.0;
+      final currentAvgBuyRate = double.tryParse(current.avgBuyRate) ?? 0.0;
+      final currentAvgSellRate = double.tryParse(current.avgSellRate) ?? 0.0;
+
+      double effectiveBuyRate = currentAvgBuyRate;
+      bool usedPreviousBuyRate = false;
+
+      if (currentBuyUsdt <= 0) {
+        final previous =
+            (i + 1 < sections.length) ? sections[i + 1] : null;
+        final previousBuyRate =
+            previous != null ? (double.tryParse(previous.avgBuyRate) ?? 0.0) : 0.0;
+        if (previousBuyRate > 0) {
+          effectiveBuyRate = previousBuyRate;
+          usedPreviousBuyRate = true;
+        }
+      }
+
+      double profit = 0.0;
+      if (currentSellUsdt > 0 &&
+          currentAvgSellRate > 0 &&
+          effectiveBuyRate > 0) {
+        profit = (currentAvgSellRate - effectiveBuyRate) * currentSellUsdt;
+      }
+
+      updated.add(
+        current.copyWith(
+          profitTk: profit.toStringAsFixed(2),
+          profitBuyRate: effectiveBuyRate.toStringAsFixed(2),
+          profitSellRate: currentAvgSellRate.toStringAsFixed(2),
+          usedPreviousBuyRate: usedPreviousBuyRate,
+        ),
+      );
+    }
+
+    return updated;
   }
 
   /// Get the index of the current month in monthSections (for initial PageView page)

@@ -9,6 +9,9 @@ class MonthSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final profitValue = double.tryParse(model.profitTk) ?? 0.0;
+    final profitColor = profitValue >= 0 ? Colors.green : Colors.red;
+
     return ListView(
       children: [
         // Month header with summary
@@ -134,6 +137,40 @@ class MonthSection extends StatelessWidget {
                           style: TextStyle(
                             color: Colors.red.withValues(alpha: 0.7),
                             fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                  // Profit column
+                  Column(
+                    children: [
+                      const Text(
+                        'Profit',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '৳ ${model.profitTk}',
+                        style: TextStyle(
+                          color: profitColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                      if (double.tryParse(model.profitBuyRate) != null &&
+                          double.tryParse(model.profitSellRate) != null &&
+                          double.parse(model.profitBuyRate) > 0 &&
+                          double.parse(model.profitSellRate) > 0)
+                        Text(
+                          '@${model.profitBuyRate} -> ${model.profitSellRate}',
+                          style: TextStyle(
+                            color: profitColor.withValues(alpha: 0.7),
+                            fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

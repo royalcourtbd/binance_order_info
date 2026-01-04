@@ -13,6 +13,10 @@ class MonthSectionModel {
   final String monthSellUsdt; // Total sell USDT for the month
   final String avgBuyRate; // Average actual buy rate for the month
   final String avgSellRate; // Average actual sell rate for the month
+  final String profitTk; // Profit in BDT for the month
+  final String profitBuyRate; // Buy rate used for profit calc
+  final String profitSellRate; // Sell rate used for profit calc
+  final bool usedPreviousBuyRate; // True when profit buy rate uses previous month
   final List<DateSectionModel> dateSections;
 
   MonthSectionModel({
@@ -27,6 +31,10 @@ class MonthSectionModel {
     required this.monthSellUsdt,
     required this.avgBuyRate,
     required this.avgSellRate,
+    required this.profitTk,
+    required this.profitBuyRate,
+    required this.profitSellRate,
+    required this.usedPreviousBuyRate,
     required this.dateSections,
   });
 
@@ -72,6 +80,8 @@ class MonthSectionModel {
     final avgBuyRate = buyCount > 0 ? totalBuyRate / buyCount : 0.0;
     final avgSellRate = sellCount > 0 ? totalSellRate / sellCount : 0.0;
 
+    final profit = (avgSellRate - avgBuyRate) * totalSellUsdt;
+
     return MonthSectionModel(
       monthName: DateFormat('MMMM yyyy').format(monthDate),
       month: DateFormat('MM').format(monthDate),
@@ -84,6 +94,36 @@ class MonthSectionModel {
       monthSellUsdt: totalSellUsdt.toStringAsFixed(2),
       avgBuyRate: avgBuyRate.toStringAsFixed(2),
       avgSellRate: avgSellRate.toStringAsFixed(2),
+      profitTk: profit.toStringAsFixed(2),
+      profitBuyRate: avgBuyRate.toStringAsFixed(2),
+      profitSellRate: avgSellRate.toStringAsFixed(2),
+      usedPreviousBuyRate: false,
+      dateSections: dateSections,
+    );
+  }
+
+  MonthSectionModel copyWith({
+    String? profitTk,
+    String? profitBuyRate,
+    String? profitSellRate,
+    bool? usedPreviousBuyRate,
+  }) {
+    return MonthSectionModel(
+      monthName: monthName,
+      month: month,
+      year: year,
+      monthBuy: monthBuy,
+      monthSell: monthSell,
+      monthBuyWithCharge: monthBuyWithCharge,
+      monthSellWithCharge: monthSellWithCharge,
+      monthBuyUsdt: monthBuyUsdt,
+      monthSellUsdt: monthSellUsdt,
+      avgBuyRate: avgBuyRate,
+      avgSellRate: avgSellRate,
+      profitTk: profitTk ?? this.profitTk,
+      profitBuyRate: profitBuyRate ?? this.profitBuyRate,
+      profitSellRate: profitSellRate ?? this.profitSellRate,
+      usedPreviousBuyRate: usedPreviousBuyRate ?? this.usedPreviousBuyRate,
       dateSections: dateSections,
     );
   }
