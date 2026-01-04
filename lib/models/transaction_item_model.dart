@@ -16,6 +16,7 @@ class TransactionItemModel {
   final String? counterPartNickName;
   final bool? additionalKycVerify;
   final double? manualCharge; // Manual charge in BDT (extra cost for BUY, extra income for SELL)
+  final double actualRate; // Actual dollar rate including manual charge
 
   TransactionItemModel({
     required this.category,
@@ -35,6 +36,7 @@ class TransactionItemModel {
     this.counterPartNickName,
     this.additionalKycVerify,
     this.manualCharge,
+    required this.actualRate,
   });
 
   /// Returns the display crypto amount based on transaction type
@@ -69,6 +71,41 @@ class TransactionItemModel {
     return double.tryParse(cryptoAmount!)?.toStringAsFixed(2) ?? cryptoAmount!;
   }
 
+  /// Calculate actual dollar rate based on transaction type
+  /// BUY: (Total BDT + Manual Charge) / Receive Quantity
+  /// SELL: (Total BDT + Manual Charge) / Total Quantity
+  static double calculateActualRate({
+    required String category,
+    required String totalPrice,
+    required String? cryptoAmount,
+    required String? commission,
+    double? manualCharge,
+  }) {
+    final totalBdt = double.tryParse(totalPrice) ?? 0.0;
+    final charge = manualCharge ?? 0.0;
+    final totalWithCharge = totalBdt + charge;
+
+    if (cryptoAmount == null || cryptoAmount == '0' || cryptoAmount.isEmpty) {
+      return 0.0;
+    }
+
+    final crypto = double.tryParse(cryptoAmount) ?? 0.0;
+    final fee = double.tryParse(commission ?? '0') ?? 0.0;
+
+    if (category.toUpperCase() == 'BUY') {
+      // BUY: Use received quantity (crypto - fee)
+      final receiveQuantity = crypto - fee;
+      if (receiveQuantity == 0) return 0.0;
+      return totalWithCharge / receiveQuantity;
+    } else {
+      // SELL: Use total quantity (crypto + fee for deducted amount)
+      // But based on screenshots, it seems total quantity is just crypto
+      final totalQuantity = crypto + fee;
+      if (totalQuantity == 0) return 0.0;
+      return totalWithCharge / totalQuantity;
+    }
+  }
+
   factory TransactionItemModel.fromJson(Map<String, dynamic> json) {
     // Safely parse createTime - handle different types
     int? createTime;
@@ -94,13 +131,25 @@ class TransactionItemModel {
       manualCharge = (json['manualCharge'] as num).toDouble();
     }
 
+    // Calculate actual rate
+    final category = json['tradeType'] ?? 'UNKNOWN';
+    final cryptoAmount = json['amount']?.toString();
+    final commission = json['commission']?.toString();
+    final actualRate = calculateActualRate(
+      category: category,
+      totalPrice: totalPriceValue,
+      cryptoAmount: cryptoAmount,
+      commission: commission,
+      manualCharge: manualCharge,
+    );
+
     return TransactionItemModel(
-      category: json['tradeType'] ?? 'UNKNOWN',
+      category: category,
       title: '#${json['orderNumber'] ?? ''}',
       method: json['payMethodName'] ?? json['payType'] ?? '',
       amount: totalPriceValue, // For backward compatibility
       totalPrice: totalPriceValue,
-      cryptoAmount: json['amount']?.toString(),
+      cryptoAmount: cryptoAmount,
       createTime: createTime,
       orderStatus: json['orderStatus'],
       unitPrice: json['unitPrice']?.toString(),
@@ -108,10 +157,11 @@ class TransactionItemModel {
       fiat: json['fiat'],
       fiatSymbol: json['fiatSymbol'],
       advNo: json['advNo']?.toString(),
-      commission: json['commission']?.toString(),
+      commission: commission,
       counterPartNickName: json['counterPartNickName'],
       additionalKycVerify: json['additionalKycVerify'],
       manualCharge: manualCharge,
+      actualRate: actualRate,
     );
   }
 }

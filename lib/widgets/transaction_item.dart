@@ -83,6 +83,16 @@ class TransactionItem extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
+                  if (transaction.actualRate > 0)
+                    Text(
+                      "@${transaction.actualRate.toStringAsFixed(2)}",
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                 ],
               ),
             ),

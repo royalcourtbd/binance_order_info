@@ -77,6 +77,16 @@ class MonthSection extends StatelessWidget {
                             decoration: TextDecoration.lineThrough,
                           ),
                         ),
+                      if (double.tryParse(model.avgBuyRate) != null &&
+                          double.parse(model.avgBuyRate) > 0)
+                        Text(
+                          '@${model.avgBuyRate}',
+                          style: TextStyle(
+                            color: Colors.blue.withValues(alpha: 0.7),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                     ],
                   ),
                   // Sell column
@@ -115,6 +125,16 @@ class MonthSection extends StatelessWidget {
                             color: Colors.red.withValues(alpha: 0.5),
                             fontSize: 11,
                             decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      if (double.tryParse(model.avgSellRate) != null &&
+                          double.parse(model.avgSellRate) > 0)
+                        Text(
+                          '@${model.avgSellRate}',
+                          style: TextStyle(
+                            color: Colors.red.withValues(alpha: 0.7),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                     ],

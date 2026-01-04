@@ -69,6 +69,16 @@ class DateSection extends StatelessWidget {
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
+                  if (double.tryParse(model.avgBuyRate) != null &&
+                      double.parse(model.avgBuyRate) > 0)
+                    Text(
+                      "@${model.avgBuyRate}",
+                      style: TextStyle(
+                        color: Colors.blue.withValues(alpha: 0.7),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(width: 20),
@@ -91,6 +101,16 @@ class DateSection extends StatelessWidget {
                         color: Colors.red.withValues(alpha: 0.6),
                         fontSize: 11,
                         decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  if (double.tryParse(model.avgSellRate) != null &&
+                      double.parse(model.avgSellRate) > 0)
+                    Text(
+                      "@${model.avgSellRate}",
+                      style: TextStyle(
+                        color: Colors.red.withValues(alpha: 0.7),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                 ],

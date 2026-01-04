@@ -11,6 +11,8 @@ class MonthSectionModel {
   final String monthSellWithCharge; // Total sell BDT with manual charges
   final String monthBuyUsdt; // Total buy USDT for the month
   final String monthSellUsdt; // Total sell USDT for the month
+  final String avgBuyRate; // Average actual buy rate for the month
+  final String avgSellRate; // Average actual sell rate for the month
   final List<DateSectionModel> dateSections;
 
   MonthSectionModel({
@@ -23,6 +25,8 @@ class MonthSectionModel {
     required this.monthSellWithCharge,
     required this.monthBuyUsdt,
     required this.monthSellUsdt,
+    required this.avgBuyRate,
+    required this.avgSellRate,
     required this.dateSections,
   });
 
@@ -38,22 +42,35 @@ class MonthSectionModel {
     double totalBuyUsdt = 0.0;
     double totalSellUsdt = 0.0;
 
+    // Calculate average rates
+    double totalBuyRate = 0.0;
+    double totalSellRate = 0.0;
+    int buyCount = 0;
+    int sellCount = 0;
+
     for (var dateSection in dateSections) {
       totalBuy += double.tryParse(dateSection.dayBuy) ?? 0.0;
       totalSell += double.tryParse(dateSection.daySell) ?? 0.0;
       totalBuyWithCharge += double.tryParse(dateSection.dayBuyWithCharge) ?? 0.0;
       totalSellWithCharge += double.tryParse(dateSection.daySellWithCharge) ?? 0.0;
 
-      // Calculate USDT totals from transactions
+      // Calculate USDT totals and average rates from transactions
       for (var transaction in dateSection.transactions) {
         final usdtAmount = double.tryParse(transaction.cryptoAmount ?? '0') ?? 0.0;
         if (transaction.category.toUpperCase() == 'BUY') {
           totalBuyUsdt += usdtAmount;
+          totalBuyRate += transaction.actualRate;
+          buyCount++;
         } else if (transaction.category.toUpperCase() == 'SELL') {
           totalSellUsdt += usdtAmount;
+          totalSellRate += transaction.actualRate;
+          sellCount++;
         }
       }
     }
+
+    final avgBuyRate = buyCount > 0 ? totalBuyRate / buyCount : 0.0;
+    final avgSellRate = sellCount > 0 ? totalSellRate / sellCount : 0.0;
 
     return MonthSectionModel(
       monthName: DateFormat('MMMM yyyy').format(monthDate),
@@ -65,6 +82,8 @@ class MonthSectionModel {
       monthSellWithCharge: totalSellWithCharge.toStringAsFixed(2),
       monthBuyUsdt: totalBuyUsdt.toStringAsFixed(2),
       monthSellUsdt: totalSellUsdt.toStringAsFixed(2),
+      avgBuyRate: avgBuyRate.toStringAsFixed(2),
+      avgSellRate: avgSellRate.toStringAsFixed(2),
       dateSections: dateSections,
     );
   }
