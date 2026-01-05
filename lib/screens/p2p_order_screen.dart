@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 import '../controllers/orders_controller.dart';
 import '../widgets/month_section.dart';
 import '../widgets/loading_widget.dart';
@@ -17,6 +18,18 @@ class _P2POrderScreenState extends State<P2POrderScreen> {
   final OrdersController controller = Get.put(OrdersController());
   late PageController _pageController;
   final RxInt _currentPageIndex = 0.obs;
+  DateTime? _lastBackPress;
+
+  void _showBackExitNotice(BuildContext context) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Exit করতে আবার back চাপুন'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+  }
 
   @override
   void initState() {
@@ -48,81 +61,101 @@ class _P2POrderScreenState extends State<P2POrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) {
+          return;
+        }
+        final now = DateTime.now();
+        if (_lastBackPress == null ||
+            now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
+          _lastBackPress = now;
+          _showBackExitNotice(context);
+          return;
+        }
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'Binance P2P Orders',
-          style: TextStyle(color: Colors.black, fontSize: 18),
-        ),
-        centerTitle: true,
-        actions: [
-          Obx(
-            () => controller.isLoading.value
-                ? const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.refresh, color: Colors.black),
-                    onPressed: () => controller.refreshOrders(),
-                  ),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: const Text(
+            'Binance P2P Orders',
+            style: TextStyle(color: Colors.black, fontSize: 18),
           ),
-        ],
-      ),
-      body: Obx(() {
-        // Loading state
-        if (controller.isLoading.value && controller.monthSections.isEmpty) {
-          return const LoadingWidget(message: 'Fetching orders from API...');
-        }
+          centerTitle: true,
+          actions: [
+            Obx(
+              () => controller.isLoading.value
+                  ? const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.black),
+                      onPressed: () => controller.refreshOrders(),
+                    ),
+            ),
+          ],
+        ),
+        body: Obx(() {
+          // Loading state
+          if (controller.isLoading.value && controller.monthSections.isEmpty) {
+            return const LoadingWidget(message: 'Fetching orders from API...');
+          }
 
-        // Error state
-        if (controller.errorMessage.isNotEmpty &&
-            controller.monthSections.isEmpty) {
-          return ErrorDisplayWidget(
-            message: controller.errorMessage.value,
-            onRetry: () => controller.refreshOrders(),
-          );
-        }
-
-        // Empty state
-        if (controller.monthSections.isEmpty) {
-          return const EmptyStateWidget();
-        }
-
-        // Success state with data
-        return RefreshIndicator(
-          onRefresh: () => controller.refreshOrders(),
-          child: Obx(() {
-            if (controller.monthSections.isEmpty) {
-              return ListView(
-                children: const [
-                  SizedBox(
-                    height: 200,
-                    child: Center(child: Text('No data')),
-                  ),
-                ],
-              );
-            }
-            return PageView.builder(
-              controller: _pageController,
-              itemCount: controller.monthSections.length,
-              onPageChanged: (index) {
-                _currentPageIndex.value = index;
-              },
-              itemBuilder: (context, index) {
-                return MonthSection(model: controller.monthSections[index]);
-              },
+          // Error state
+          if (controller.errorMessage.isNotEmpty &&
+              controller.monthSections.isEmpty) {
+            return ErrorDisplayWidget(
+              message: controller.errorMessage.value,
+              onRetry: () => controller.refreshOrders(),
             );
-          }),
-        );
-      }),
+          }
+
+          // Empty state
+          if (controller.monthSections.isEmpty) {
+            return const EmptyStateWidget();
+          }
+
+          // Success state with data
+          return RefreshIndicator(
+            onRefresh: () => controller.refreshOrders(),
+            child: Obx(() {
+              if (controller.monthSections.isEmpty) {
+                return ListView(
+                  children: const [
+                    SizedBox(
+                      height: 200,
+                      child: Center(child: Text('No data')),
+                    ),
+                  ],
+                );
+              }
+              return PageView.builder(
+                controller: _pageController,
+                itemCount: controller.monthSections.length,
+                onPageChanged: (index) {
+                  _currentPageIndex.value = index;
+                },
+                itemBuilder: (context, index) {
+                  return MonthSection(model: controller.monthSections[index]);
+                },
+              );
+            }),
+          );
+        }),
+      ),
     );
   }
 }
