@@ -13,8 +13,13 @@ class TransactionItemModel {
   final String? fiatSymbol;
   final String? advNo;
   final String? commission;
+  final String? takerCommission;
+  final String? takerAmount;
+  final String? takerCommissionRate;
   final String? counterPartNickName;
   final bool? additionalKycVerify;
+  final double? manualCharge; // Manual charge in BDT (extra cost for BUY, extra income for SELL)
+  final double actualRate; // Actual dollar rate including manual charge
 
   TransactionItemModel({
     required this.category,
@@ -31,9 +36,59 @@ class TransactionItemModel {
     this.fiatSymbol,
     this.advNo,
     this.commission,
+    this.takerCommission,
+    this.takerAmount,
+    this.takerCommissionRate,
     this.counterPartNickName,
     this.additionalKycVerify,
+    this.manualCharge,
+    required this.actualRate,
   });
+
+  static String? _resolveCommission(
+    String? commission,
+    String? takerCommission,
+  ) {
+    final hasCommission = commission != null && commission.isNotEmpty;
+    final hasTakerCommission =
+        takerCommission != null && takerCommission.isNotEmpty;
+    final commissionValue = double.tryParse(commission ?? '');
+    final takerCommissionValue = double.tryParse(takerCommission ?? '');
+
+    if (hasCommission && (commissionValue ?? 0) != 0) {
+      return commission;
+    }
+    if (hasTakerCommission && (takerCommissionValue ?? 0) != 0) {
+      return takerCommission;
+    }
+    if (hasCommission) {
+      return commission;
+    }
+    return takerCommission;
+  }
+
+  String? get effectiveCommission {
+    return _resolveCommission(commission, takerCommission);
+  }
+
+  String get effectiveCommissionLabel {
+    final hasCommission = commission != null && commission!.isNotEmpty;
+    final hasTakerCommission =
+        takerCommission != null && takerCommission!.isNotEmpty;
+    final commissionValue = double.tryParse(commission ?? '');
+    final takerCommissionValue = double.tryParse(takerCommission ?? '');
+
+    if (hasCommission && (commissionValue ?? 0) != 0) {
+      return 'Commission';
+    }
+    if (hasTakerCommission && (takerCommissionValue ?? 0) != 0) {
+      return 'Taker';
+    }
+    if (hasCommission) {
+      return 'Commission';
+    }
+    return 'Taker';
+  }
 
   /// Returns the display crypto amount based on transaction type
   /// BUY: Shows received amount (cryptoAmount - commission)
@@ -42,7 +97,7 @@ class TransactionItemModel {
     if (cryptoAmount == null) return '0.00';
 
     final crypto = double.tryParse(cryptoAmount!) ?? 0.0;
-    final fee = double.tryParse(commission ?? '0') ?? 0.0;
+    final fee = double.tryParse(effectiveCommission ?? '0') ?? 0.0;
 
     if (category.toUpperCase() == 'BUY') {
       // For BUY: Show received amount (what user actually gets)
@@ -57,7 +112,7 @@ class TransactionItemModel {
   String getReceivedQuantity() {
     if (cryptoAmount == null) return '0.00';
     final crypto = double.tryParse(cryptoAmount!) ?? 0.0;
-    final fee = double.tryParse(commission ?? '0') ?? 0.0;
+    final fee = double.tryParse(effectiveCommission ?? '0') ?? 0.0;
     return (crypto - fee).toStringAsFixed(2);
   }
 
@@ -65,6 +120,43 @@ class TransactionItemModel {
   String getTotalQuantity() {
     if (cryptoAmount == null) return '0.00';
     return double.tryParse(cryptoAmount!)?.toStringAsFixed(2) ?? cryptoAmount!;
+  }
+
+  /// Calculate actual dollar rate based on transaction type
+  /// BUY: (Total BDT + Manual Charge) / Receive Quantity
+  /// SELL: (Total BDT + Manual Charge) / Total Quantity
+  static double calculateActualRate({
+    required String category,
+    required String totalPrice,
+    required String? cryptoAmount,
+    required String? commission,
+    String? takerCommission,
+    double? manualCharge,
+  }) {
+    final totalBdt = double.tryParse(totalPrice) ?? 0.0;
+    final charge = manualCharge ?? 0.0;
+    final totalWithCharge = totalBdt + charge;
+
+    if (cryptoAmount == null || cryptoAmount == '0' || cryptoAmount.isEmpty) {
+      return 0.0;
+    }
+
+    final crypto = double.tryParse(cryptoAmount) ?? 0.0;
+    final resolvedCommission = _resolveCommission(commission, takerCommission);
+    final fee = double.tryParse(resolvedCommission ?? '0') ?? 0.0;
+
+    if (category.toUpperCase() == 'BUY') {
+      // BUY: Use received quantity (crypto - fee)
+      final receiveQuantity = crypto - fee;
+      if (receiveQuantity == 0) return 0.0;
+      return totalWithCharge / receiveQuantity;
+    } else {
+      // SELL: Use total quantity (crypto + fee for deducted amount)
+      // But based on screenshots, it seems total quantity is just crypto
+      final totalQuantity = crypto + fee;
+      if (totalQuantity == 0) return 0.0;
+      return totalWithCharge / totalQuantity;
+    }
   }
 
   factory TransactionItemModel.fromJson(Map<String, dynamic> json) {
@@ -86,13 +178,35 @@ class TransactionItemModel {
 
     final totalPriceValue = json['totalPrice']?.toString() ?? '0.00';
 
+    // Parse manual charge if provided
+    double? manualCharge;
+    if (json['manualCharge'] != null) {
+      manualCharge = (json['manualCharge'] as num).toDouble();
+    }
+
+    // Calculate actual rate
+    final category = json['tradeType'] ?? 'UNKNOWN';
+    final cryptoAmount = json['amount']?.toString();
+    final commission = json['commission']?.toString();
+    final takerCommission = json['takerCommission']?.toString();
+    final takerAmount = json['takerAmount']?.toString();
+    final takerCommissionRate = json['takerCommissionRate']?.toString();
+    final actualRate = calculateActualRate(
+      category: category,
+      totalPrice: totalPriceValue,
+      cryptoAmount: cryptoAmount,
+      commission: commission,
+      takerCommission: takerCommission,
+      manualCharge: manualCharge,
+    );
+
     return TransactionItemModel(
-      category: json['tradeType'] ?? 'UNKNOWN',
+      category: category,
       title: '#${json['orderNumber'] ?? ''}',
       method: json['payMethodName'] ?? json['payType'] ?? '',
       amount: totalPriceValue, // For backward compatibility
       totalPrice: totalPriceValue,
-      cryptoAmount: json['amount']?.toString(),
+      cryptoAmount: cryptoAmount,
       createTime: createTime,
       orderStatus: json['orderStatus'],
       unitPrice: json['unitPrice']?.toString(),
@@ -100,9 +214,14 @@ class TransactionItemModel {
       fiat: json['fiat'],
       fiatSymbol: json['fiatSymbol'],
       advNo: json['advNo']?.toString(),
-      commission: json['commission']?.toString(),
+      commission: commission,
+      takerCommission: takerCommission,
+      takerAmount: takerAmount,
+      takerCommissionRate: takerCommissionRate,
       counterPartNickName: json['counterPartNickName'],
       additionalKycVerify: json['additionalKycVerify'],
+      manualCharge: manualCharge,
+      actualRate: actualRate,
     );
   }
 }

@@ -48,20 +48,72 @@ class DateSection extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Text(
-                "৳ ${model.dayBuy}",
-                style: const TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.w500,
-                ),
+              // Buy column
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "৳ ${model.dayBuyWithCharge}",
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (model.dayBuy != model.dayBuyWithCharge)
+                    Text(
+                      "৳ ${model.dayBuy}",
+                      style: TextStyle(
+                        color: Colors.blue.withValues(alpha: 0.6),
+                        fontSize: 11,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  if (double.tryParse(model.avgBuyRate) != null &&
+                      double.parse(model.avgBuyRate) > 0)
+                    Text(
+                      "@${model.avgBuyRate}",
+                      style: TextStyle(
+                        color: Colors.blue.withValues(alpha: 0.7),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: 20),
-              Text(
-                "৳ ${model.daySell}",
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w500,
-                ),
+              // Sell column
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "৳ ${model.daySellWithCharge}",
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (model.daySell != model.daySellWithCharge)
+                    Text(
+                      "৳ ${model.daySell}",
+                      style: TextStyle(
+                        color: Colors.red.withValues(alpha: 0.6),
+                        fontSize: 11,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  if (double.tryParse(model.avgSellRate) != null &&
+                      double.parse(model.avgSellRate) > 0)
+                    Text(
+                      "@${model.avgSellRate}",
+                      style: TextStyle(
+                        color: Colors.red.withValues(alpha: 0.7),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),

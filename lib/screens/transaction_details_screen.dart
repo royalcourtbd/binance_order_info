@@ -1,6 +1,10 @@
 import 'package:binance_order_info/models/transaction_item_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
+import '../controllers/orders_controller.dart';
+import '../widgets/manual_charge_dialog.dart';
 
 class TransactionDetailsScreen extends StatelessWidget {
   final TransactionItemModel transaction;
@@ -9,8 +13,8 @@ class TransactionDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isBuy = transaction.category.toUpperCase() == 'BUY';
-    final transactionColor = isBuy ? Colors.blue : Colors.red;
+    final controller = Get.find<OrdersController>();
+    final orderNumber = transaction.title.replaceFirst('#', '');
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -22,8 +26,30 @@ class TransactionDetailsScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        actions: [
+          // Edit button to add/edit manual charge
+          IconButton(
+            icon: const Icon(Icons.edit_note),
+            tooltip: 'Edit Manual Charge',
+            onPressed: () => _showManualChargeDialog(context, controller),
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
+      body: Obx(() {
+        // Get the latest transaction data from controller
+        final currentTransaction =
+            controller.getTransactionByOrderNumber(orderNumber) ?? transaction;
+
+        return _buildBody(context, currentTransaction, controller);
+      }),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, TransactionItemModel transaction, OrdersController controller) {
+    final isBuy = transaction.category.toUpperCase() == 'BUY';
+    final transactionColor = isBuy ? Colors.blue : Colors.red;
+
+    return SingleChildScrollView(
         child: Column(
           children: [
             // Header Section - Transaction Type Badge
@@ -172,12 +198,20 @@ class TransactionDetailsScreen extends StatelessWidget {
                                 '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
                               ),
                             ],
-                            if (transaction.commission != null) ...[
+                            if (transaction.effectiveCommission != null) ...[
                               const SizedBox(height: 8),
                               _buildAmountDetailRow(
-                                'Fee',
-                                '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission} ${transaction.asset}',
+                                'Fee (${transaction.effectiveCommissionLabel})',
+                                '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
                                 valueColor: Colors.orange,
+                              ),
+                            ],
+                            if (transaction.manualCharge != null) ...[
+                              const SizedBox(height: 8),
+                              _buildAmountDetailRow(
+                                'Manual Charge',
+                                '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
+                                valueColor: Colors.deepOrange,
                               ),
                             ],
                           ] else ...[
@@ -198,12 +232,20 @@ class TransactionDetailsScreen extends StatelessWidget {
                                 '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
                               ),
                             ],
-                            if (transaction.commission != null) ...[
+                            if (transaction.effectiveCommission != null) ...[
                               const SizedBox(height: 8),
                               _buildAmountDetailRow(
-                                'Fee',
-                                '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission} ${transaction.asset}',
+                                'Fee (${transaction.effectiveCommissionLabel})',
+                                '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
                                 valueColor: Colors.orange,
+                              ),
+                            ],
+                            if (transaction.manualCharge != null) ...[
+                              const SizedBox(height: 8),
+                              _buildAmountDetailRow(
+                                'Manual Charge',
+                                '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
+                                valueColor: Colors.deepOrange,
                               ),
                             ],
                           ],
@@ -245,7 +287,8 @@ class TransactionDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildDetailRow(
+                  _buildCopyableDetailRow(
+                    context,
                     'Order Number',
                     transaction.title.replaceFirst('#', ''),
                   ),
@@ -299,8 +342,7 @@ class TransactionDetailsScreen extends StatelessWidget {
             const SizedBox(height: 24),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildAmountDetailRow(String label, String value,
@@ -325,6 +367,86 @@ class TransactionDetailsScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCopyableDetailRow(BuildContext context, String label, String value,
+      {Color? valueColor, Color? statusColor}) {
+    return GestureDetector(
+      onLongPress: () {
+        Clipboard.setData(ClipboardData(text: value));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$label copied to clipboard'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 3,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Flexible(
+                    child: statusColor != null
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              value,
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: statusColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            value,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: valueColor ?? Colors.black87,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.copy,
+                    size: 16,
+                    color: Colors.grey[400],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -412,6 +534,51 @@ class TransactionDetailsScreen extends StatelessWidget {
         return Colors.red;
       default:
         return Colors.grey;
+    }
+  }
+
+  /// Show dialog to add/edit manual charge
+  void _showManualChargeDialog(
+      BuildContext context, OrdersController controller) async {
+    final isBuy = transaction.category.toUpperCase() == 'BUY';
+    final orderNumber = transaction.title.replaceFirst('#', '');
+
+    final result = await showDialog(
+      context: context,
+      builder: (context) => ManualChargeDialog(
+        isBuy: isBuy,
+        currentCharge: transaction.manualCharge,
+      ),
+    );
+
+    if (result == null) return; // User cancelled
+
+    if (result == 'remove') {
+      // Remove the manual charge
+      final success = await controller.removeManualCharge(orderNumber);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Manual charge removed successfully'
+                : 'Failed to remove manual charge'),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    } else if (result is double) {
+      // Save the manual charge
+      final success = await controller.saveManualCharge(orderNumber, result);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Manual charge saved successfully'
+                : 'Failed to save manual charge'),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
     }
   }
 }
