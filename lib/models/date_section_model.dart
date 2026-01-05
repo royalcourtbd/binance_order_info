@@ -9,6 +9,8 @@ class DateSectionModel {
   final String daySell; // Total sell without manual charges
   final String dayBuyWithCharge; // Total buy with manual charges
   final String daySellWithCharge; // Total sell with manual charges
+  final String dayBuyUsdt; // Total buy USDT for the day
+  final String daySellUsdt; // Total sell USDT for the day
   final String avgBuyRate; // Average actual buy rate for the day
   final String avgSellRate; // Average actual sell rate for the day
   final List<TransactionItemModel> transactions;
@@ -21,6 +23,8 @@ class DateSectionModel {
     required this.daySell,
     required this.dayBuyWithCharge,
     required this.daySellWithCharge,
+    required this.dayBuyUsdt,
+    required this.daySellUsdt,
     required this.avgBuyRate,
     required this.avgSellRate,
     required this.transactions,
@@ -79,6 +83,8 @@ class DateSectionModel {
       daySell: totalSell.toStringAsFixed(2),
       dayBuyWithCharge: totalBuyWithCharge.toStringAsFixed(2),
       daySellWithCharge: totalSellWithCharge.toStringAsFixed(2),
+      dayBuyUsdt: totalBuyUsdt.toStringAsFixed(2),
+      daySellUsdt: totalSellUsdt.toStringAsFixed(2),
       avgBuyRate: avgBuyRate.toStringAsFixed(2),
       avgSellRate: avgSellRate.toStringAsFixed(2),
       transactions: transactions,
