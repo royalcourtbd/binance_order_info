@@ -45,6 +45,32 @@ class TransactionItemModel {
     required this.actualRate,
   });
 
+  static String? _resolveCommission(
+    String? commission,
+    String? takerCommission,
+  ) {
+    final hasCommission = commission != null && commission.isNotEmpty;
+    final hasTakerCommission =
+        takerCommission != null && takerCommission.isNotEmpty;
+    final commissionValue = double.tryParse(commission ?? '');
+    final takerCommissionValue = double.tryParse(takerCommission ?? '');
+
+    if (hasCommission && (commissionValue ?? 0) != 0) {
+      return commission;
+    }
+    if (hasTakerCommission && (takerCommissionValue ?? 0) != 0) {
+      return takerCommission;
+    }
+    if (hasCommission) {
+      return commission;
+    }
+    return takerCommission;
+  }
+
+  String? get effectiveCommission {
+    return _resolveCommission(commission, takerCommission);
+  }
+
   /// Returns the display crypto amount based on transaction type
   /// BUY: Shows received amount (cryptoAmount - commission)
   /// SELL: Shows total deducted amount (cryptoAmount + commission)
@@ -52,7 +78,7 @@ class TransactionItemModel {
     if (cryptoAmount == null) return '0.00';
 
     final crypto = double.tryParse(cryptoAmount!) ?? 0.0;
-    final fee = double.tryParse(commission ?? '0') ?? 0.0;
+    final fee = double.tryParse(effectiveCommission ?? '0') ?? 0.0;
 
     if (category.toUpperCase() == 'BUY') {
       // For BUY: Show received amount (what user actually gets)
@@ -67,7 +93,7 @@ class TransactionItemModel {
   String getReceivedQuantity() {
     if (cryptoAmount == null) return '0.00';
     final crypto = double.tryParse(cryptoAmount!) ?? 0.0;
-    final fee = double.tryParse(commission ?? '0') ?? 0.0;
+    final fee = double.tryParse(effectiveCommission ?? '0') ?? 0.0;
     return (crypto - fee).toStringAsFixed(2);
   }
 
@@ -85,6 +111,7 @@ class TransactionItemModel {
     required String totalPrice,
     required String? cryptoAmount,
     required String? commission,
+    String? takerCommission,
     double? manualCharge,
   }) {
     final totalBdt = double.tryParse(totalPrice) ?? 0.0;
@@ -96,7 +123,8 @@ class TransactionItemModel {
     }
 
     final crypto = double.tryParse(cryptoAmount) ?? 0.0;
-    final fee = double.tryParse(commission ?? '0') ?? 0.0;
+    final resolvedCommission = _resolveCommission(commission, takerCommission);
+    final fee = double.tryParse(resolvedCommission ?? '0') ?? 0.0;
 
     if (category.toUpperCase() == 'BUY') {
       // BUY: Use received quantity (crypto - fee)
@@ -149,6 +177,7 @@ class TransactionItemModel {
       totalPrice: totalPriceValue,
       cryptoAmount: cryptoAmount,
       commission: commission,
+      takerCommission: takerCommission,
       manualCharge: manualCharge,
     );
 

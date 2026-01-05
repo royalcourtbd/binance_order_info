@@ -198,11 +198,11 @@ class TransactionDetailsScreen extends StatelessWidget {
                                 '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
                               ),
                             ],
-                            if (transaction.commission != null) ...[
+                            if (transaction.effectiveCommission != null) ...[
                               const SizedBox(height: 8),
                               _buildAmountDetailRow(
                                 'Fee',
-                                '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission} ${transaction.asset}',
+                                '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
                                 valueColor: Colors.orange,
                               ),
                             ],
@@ -232,11 +232,11 @@ class TransactionDetailsScreen extends StatelessWidget {
                                 '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
                               ),
                             ],
-                            if (transaction.commission != null) ...[
+                            if (transaction.effectiveCommission != null) ...[
                               const SizedBox(height: 8),
                               _buildAmountDetailRow(
                                 'Fee',
-                                '${double.tryParse(transaction.commission!)?.toStringAsFixed(2) ?? transaction.commission} ${transaction.asset}',
+                                '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
                                 valueColor: Colors.orange,
                               ),
                             ],
