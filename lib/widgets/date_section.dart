@@ -52,6 +52,16 @@ class DateSection extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  if (double.tryParse(model.dayBuyUsdt) != null &&
+                      double.parse(model.dayBuyUsdt) > 0)
+                    Text(
+                      "৳ ${double.parse(model.dayBuyUsdt).toStringAsFixed(2)} USDT",
+                      style: TextStyle(
+                        color: Colors.blue.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
                   Text(
                     "৳ ${model.dayBuyWithCharge}",
                     style: const TextStyle(
@@ -86,6 +96,16 @@ class DateSection extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  if (double.tryParse(model.daySellUsdt) != null &&
+                      double.parse(model.daySellUsdt) > 0)
+                    Text(
+                      "৳ ${double.parse(model.daySellUsdt).toStringAsFixed(2)} USDT",
+                      style: TextStyle(
+                        color: Colors.red.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
                   Text(
                     "৳ ${model.daySellWithCharge}",
                     style: const TextStyle(
