@@ -13,6 +13,9 @@ class TransactionItemModel {
   final String? fiatSymbol;
   final String? advNo;
   final String? commission;
+  final String? takerCommission;
+  final String? takerAmount;
+  final String? takerCommissionRate;
   final String? counterPartNickName;
   final bool? additionalKycVerify;
   final double? manualCharge; // Manual charge in BDT (extra cost for BUY, extra income for SELL)
@@ -33,6 +36,9 @@ class TransactionItemModel {
     this.fiatSymbol,
     this.advNo,
     this.commission,
+    this.takerCommission,
+    this.takerAmount,
+    this.takerCommissionRate,
     this.counterPartNickName,
     this.additionalKycVerify,
     this.manualCharge,
@@ -135,6 +141,9 @@ class TransactionItemModel {
     final category = json['tradeType'] ?? 'UNKNOWN';
     final cryptoAmount = json['amount']?.toString();
     final commission = json['commission']?.toString();
+    final takerCommission = json['takerCommission']?.toString();
+    final takerAmount = json['takerAmount']?.toString();
+    final takerCommissionRate = json['takerCommissionRate']?.toString();
     final actualRate = calculateActualRate(
       category: category,
       totalPrice: totalPriceValue,
@@ -158,6 +167,9 @@ class TransactionItemModel {
       fiatSymbol: json['fiatSymbol'],
       advNo: json['advNo']?.toString(),
       commission: commission,
+      takerCommission: takerCommission,
+      takerAmount: takerAmount,
+      takerCommissionRate: takerCommissionRate,
       counterPartNickName: json['counterPartNickName'],
       additionalKycVerify: json['additionalKycVerify'],
       manualCharge: manualCharge,
