@@ -16,7 +16,8 @@ class MonthSectionModel {
   final String profitTk; // Profit in BDT for the month
   final String profitBuyRate; // Buy rate used for profit calc
   final String profitSellRate; // Sell rate used for profit calc
-  final bool usedPreviousBuyRate; // True when profit buy rate uses previous month
+  final bool
+  usedPreviousBuyRate; // True when profit buy rate uses previous month
   final List<DateSectionModel> dateSections;
 
   MonthSectionModel({
@@ -50,35 +51,42 @@ class MonthSectionModel {
     double totalBuyUsdt = 0.0;
     double totalSellUsdt = 0.0;
 
-    // Calculate average rates
-    double totalBuyRate = 0.0;
-    double totalSellRate = 0.0;
-    int buyCount = 0;
-    int sellCount = 0;
+    // Calculate weighted average rates (total BDT / total USDT)
+    double totalBuyBdt = 0.0;
+    double totalSellBdt = 0.0;
 
     for (var dateSection in dateSections) {
       totalBuy += double.tryParse(dateSection.dayBuy) ?? 0.0;
       totalSell += double.tryParse(dateSection.daySell) ?? 0.0;
-      totalBuyWithCharge += double.tryParse(dateSection.dayBuyWithCharge) ?? 0.0;
-      totalSellWithCharge += double.tryParse(dateSection.daySellWithCharge) ?? 0.0;
+      totalBuyWithCharge +=
+          double.tryParse(dateSection.dayBuyWithCharge) ?? 0.0;
+      totalSellWithCharge +=
+          double.tryParse(dateSection.daySellWithCharge) ?? 0.0;
 
-      // Calculate USDT totals and average rates from transactions
+      // Calculate USDT totals and weighted BDT totals from transactions
       for (var transaction in dateSection.transactions) {
-        final usdtAmount = double.tryParse(transaction.cryptoAmount ?? '0') ?? 0.0;
+        final amount = double.tryParse(transaction.amount) ?? 0.0;
+        final manualCharge = transaction.manualCharge ?? 0.0;
+
         if (transaction.category.toUpperCase() == 'BUY') {
-          totalBuyUsdt += usdtAmount;
-          totalBuyRate += transaction.actualRate;
-          buyCount++;
+          // For BUY: use received quantity (after commission)
+          final receivedUsdt =
+              double.tryParse(transaction.getReceivedQuantity()) ?? 0.0;
+          totalBuyUsdt += receivedUsdt;
+          totalBuyBdt += amount + manualCharge;
         } else if (transaction.category.toUpperCase() == 'SELL') {
-          totalSellUsdt += usdtAmount;
-          totalSellRate += transaction.actualRate;
-          sellCount++;
+          // For SELL: use display crypto amount
+          final displayUsdt =
+              double.tryParse(transaction.getDisplayCryptoAmount()) ?? 0.0;
+          totalSellUsdt += displayUsdt;
+          totalSellBdt += amount + manualCharge;
         }
       }
     }
 
-    final avgBuyRate = buyCount > 0 ? totalBuyRate / buyCount : 0.0;
-    final avgSellRate = sellCount > 0 ? totalSellRate / sellCount : 0.0;
+    // Calculate weighted average rates
+    final avgBuyRate = totalBuyUsdt > 0 ? totalBuyBdt / totalBuyUsdt : 0.0;
+    final avgSellRate = totalSellUsdt > 0 ? totalSellBdt / totalSellUsdt : 0.0;
 
     final profit = (avgSellRate - avgBuyRate) * totalSellUsdt;
 
