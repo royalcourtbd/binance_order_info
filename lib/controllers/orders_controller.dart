@@ -29,21 +29,32 @@ class OrdersController extends GetxController {
   }
 
   Future<void> fetchOrders() async {
+    log('🔄 [Controller] Starting fetchOrders...');
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
       // Fetch both completed orders and summary in parallel
       await Future.wait([_fetchCompletedOrders(), _fetchSummary()]);
+      log('✅ [Controller] fetchOrders completed successfully');
+    } catch (e, stackTrace) {
+      log('❌ [Controller] fetchOrders failed: $e');
+      log('❌ [Controller] Stack trace: $stackTrace');
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<void> _fetchCompletedOrders() async {
+    log('🔄 [Controller] Fetching completed orders with days=$days');
     final response = await _apiService.getCompletedOrders(days: days);
 
+    log('📊 [Controller] Response success: ${response.success}');
+    log('📊 [Controller] Response message: ${response.message}');
+    log('📊 [Controller] Response data null: ${response.data == null}');
+
     if (response.success && response.data != null) {
+      log('✅ [Controller] Processing ${response.data!.length} orders');
       try {
         // Load manual charges from storage
         final manualCharges = await _chargeService.getAllCharges();
@@ -74,14 +85,18 @@ class OrdersController extends GetxController {
 
         // Group transactions by date
         dateSections.value = _groupTransactionsByDate(transactions);
+        log('✅ [Controller] Created ${dateSections.length} date sections');
 
         // Group date sections by month for PageView
         monthSections.value = _groupDateSectionsByMonth(dateSections);
+        log('✅ [Controller] Created ${monthSections.length} month sections');
       } catch (e, stackTrace) {
-        log('🔍 Stack trace: $stackTrace');
+        log('❌ [Controller] Error processing orders: $e');
+        log('❌ [Controller] Stack trace: $stackTrace');
         errorMessage.value = 'Error processing orders: $e';
       }
     } else {
+      log('❌ [Controller] Failed to fetch orders: ${response.message}');
       errorMessage.value = response.message;
     }
   }

@@ -5,7 +5,6 @@ import '../widgets/month_section.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
 import '../widgets/empty_state_widget.dart';
-import '../widgets/ip_config_dialog.dart';
 
 class P2POrderScreen extends StatefulWidget {
   const P2POrderScreen({super.key});
@@ -54,17 +53,6 @@ class _P2POrderScreenState extends State<P2POrderScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.settings, color: Colors.black),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => IpConfigDialog(
-                onIpChanged: () => controller.refreshOrders(),
-              ),
-            );
-          },
-        ),
         title: const Text(
           'Binance P2P Orders',
           style: TextStyle(color: Colors.black, fontSize: 18),
