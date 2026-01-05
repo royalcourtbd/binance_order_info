@@ -201,7 +201,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                             if (transaction.effectiveCommission != null) ...[
                               const SizedBox(height: 8),
                               _buildAmountDetailRow(
-                                'Fee',
+                                'Fee (${transaction.effectiveCommissionLabel})',
                                 '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
                                 valueColor: Colors.orange,
                               ),
@@ -235,7 +235,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                             if (transaction.effectiveCommission != null) ...[
                               const SizedBox(height: 8),
                               _buildAmountDetailRow(
-                                'Fee',
+                                'Fee (${transaction.effectiveCommissionLabel})',
                                 '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
                                 valueColor: Colors.orange,
                               ),

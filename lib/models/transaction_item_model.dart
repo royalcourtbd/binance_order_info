@@ -71,6 +71,25 @@ class TransactionItemModel {
     return _resolveCommission(commission, takerCommission);
   }
 
+  String get effectiveCommissionLabel {
+    final hasCommission = commission != null && commission!.isNotEmpty;
+    final hasTakerCommission =
+        takerCommission != null && takerCommission!.isNotEmpty;
+    final commissionValue = double.tryParse(commission ?? '');
+    final takerCommissionValue = double.tryParse(takerCommission ?? '');
+
+    if (hasCommission && (commissionValue ?? 0) != 0) {
+      return 'Commission';
+    }
+    if (hasTakerCommission && (takerCommissionValue ?? 0) != 0) {
+      return 'Taker';
+    }
+    if (hasCommission) {
+      return 'Commission';
+    }
+    return 'Taker';
+  }
+
   /// Returns the display crypto amount based on transaction type
   /// BUY: Shows received amount (cryptoAmount - commission)
   /// SELL: Shows total deducted amount (cryptoAmount + commission)
