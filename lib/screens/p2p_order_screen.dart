@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import '../controllers/orders_controller.dart';
+import '../models/balance_model.dart';
 import '../widgets/month_section.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
@@ -142,20 +143,133 @@ class _P2POrderScreenState extends State<P2POrderScreen> {
                   ],
                 );
               }
-              return PageView.builder(
-                controller: _pageController,
-                itemCount: controller.monthSections.length,
-                onPageChanged: (index) {
-                  _currentPageIndex.value = index;
-                },
-                itemBuilder: (context, index) {
-                  return MonthSection(model: controller.monthSections[index]);
-                },
+              return Column(
+                children: [
+                  // USDT Balance Display
+                  Obx(() {
+                    // Find USDT asset from funding wallet
+                    final usdtAsset = controller
+                        .balance
+                        .value
+                        .data
+                        .fundingWallet
+                        .firstWhere(
+                          (asset) => asset.asset == 'USDT',
+                          orElse: () => AssetBalance(
+                            asset: 'USDT',
+                            free: '0',
+                            locked: '0',
+                            withdrawing: '0',
+                            btcValuation: '0',
+                            total: 0.0,
+                          ),
+                        );
+
+                    final free = double.tryParse(usdtAsset.free) ?? 0.0;
+                    final locked = double.tryParse(usdtAsset.locked) ?? 0.0;
+                    final total = usdtAsset.total;
+
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFF0B90B), Color(0xFFFCD535)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withValues(alpha: .3),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'USDT Balance',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildBalanceRow('Free', free, 'Available balance'),
+                          const SizedBox(height: 8),
+                          _buildBalanceRow('Locked', locked, 'Pending orders'),
+                          const SizedBox(height: 8),
+                          _buildBalanceRow('Total', total, 'Free + Locked'),
+                        ],
+                      ),
+                    );
+                  }),
+                  // PageView for month sections
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: controller.monthSections.length,
+                      onPageChanged: (index) {
+                        _currentPageIndex.value = index;
+                      },
+                      itemBuilder: (context, index) {
+                        return MonthSection(
+                          model: controller.monthSections[index],
+                        );
+                      },
+                    ),
+                  ),
+                ],
               );
             }),
           );
         }),
       ),
+    );
+  }
+
+  Widget _buildBalanceRow(String label, double amount, String description) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '(${amount.toStringAsFixed(2)} USDT)',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          description,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w400,
+            color: Colors.black54,
+          ),
+        ),
+      ],
     );
   }
 }

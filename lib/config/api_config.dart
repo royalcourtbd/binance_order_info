@@ -5,6 +5,7 @@ class ApiConfig {
   // API Endpoints
   static const String completedOrdersEndpoint = '/api/orders/completed';
   static const String summaryEndpoint = '/api/orders/summary';
+  static const String balanceEndpoint = '/api/orders/balance/all';
 
   // Configuration
   static const int timeoutSeconds = 15;

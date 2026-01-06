@@ -5,6 +5,7 @@ import '../models/date_section_model.dart';
 import '../models/month_section_model.dart';
 import '../models/transaction_item_model.dart';
 import '../models/api_response_model.dart';
+import '../models/balance_model.dart';
 import '../services/orders_api_service.dart';
 import '../services/manual_charge_service.dart';
 
@@ -16,6 +17,7 @@ class OrdersController extends GetxController {
   final RxList<DateSectionModel> dateSections = <DateSectionModel>[].obs;
   final RxList<MonthSectionModel> monthSections = <MonthSectionModel>[].obs;
   final Rx<SummaryResponse> summary = SummaryResponse.empty().obs;
+  final Rx<BalanceResponse> balance = BalanceResponse.empty().obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
@@ -34,8 +36,12 @@ class OrdersController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Fetch both completed orders and summary in parallel
-      await Future.wait([_fetchCompletedOrders(), _fetchSummary()]);
+      // Fetch completed orders, summary, and balance in parallel
+      await Future.wait([
+        _fetchCompletedOrders(),
+        _fetchSummary(),
+        _fetchBalance(),
+      ]);
       log('✅ [Controller] fetchOrders completed successfully');
     } catch (e, stackTrace) {
       log('❌ [Controller] fetchOrders failed: $e');
@@ -106,7 +112,9 @@ class OrdersController extends GetxController {
 
     if (response.success && response.data != null) {
       // Adjust summary to include manual charges
-      final adjustedSummary = await _adjustSummaryWithManualCharges(response.data!);
+      final adjustedSummary = await _adjustSummaryWithManualCharges(
+        response.data!,
+      );
       summary.value = adjustedSummary;
     } else {
       // Don't override error message if orders fetch already failed
@@ -116,9 +124,28 @@ class OrdersController extends GetxController {
     }
   }
 
+  Future<void> _fetchBalance() async {
+    log('🔄 [Controller] Fetching balance');
+    final response = await _apiService.getBalance();
+
+    if (response.success && response.data != null) {
+      balance.value = response.data!;
+      log(
+        '✅ [Controller] Balance fetched: USDT ${balance.value.summary.usdtBalance}',
+      );
+    } else {
+      log('❌ [Controller] Failed to fetch balance: ${response.message}');
+      // Don't override error message if other fetches already failed
+      if (errorMessage.value.isEmpty) {
+        errorMessage.value = response.message;
+      }
+    }
+  }
+
   /// Adjust summary to include manual charges from local storage
   Future<SummaryResponse> _adjustSummaryWithManualCharges(
-      SummaryResponse apiSummary) async {
+    SummaryResponse apiSummary,
+  ) async {
     final manualCharges = await _chargeService.getAllCharges();
 
     double totalBuyCharges = 0.0;
@@ -260,7 +287,8 @@ class OrdersController extends GetxController {
 
     for (var dateSection in dateSections) {
       // Extract year and month from the year field (format: "MM.yyyy")
-      final monthKey = '${dateSection.year.split('.')[1]}-${dateSection.year.split('.')[0]}'; // "yyyy-MM"
+      final monthKey =
+          '${dateSection.year.split('.')[1]}-${dateSection.year.split('.')[0]}'; // "yyyy-MM"
 
       if (!grouped.containsKey(monthKey)) {
         grouped[monthKey] = [];
@@ -308,10 +336,10 @@ class OrdersController extends GetxController {
       bool usedPreviousBuyRate = false;
 
       if (currentBuyUsdt <= 0) {
-        final previous =
-            (i + 1 < sections.length) ? sections[i + 1] : null;
-        final previousBuyRate =
-            previous != null ? (double.tryParse(previous.avgBuyRate) ?? 0.0) : 0.0;
+        final previous = (i + 1 < sections.length) ? sections[i + 1] : null;
+        final previousBuyRate = previous != null
+            ? (double.tryParse(previous.avgBuyRate) ?? 0.0)
+            : 0.0;
         if (previousBuyRate > 0) {
           effectiveBuyRate = previousBuyRate;
           usedPreviousBuyRate = true;
@@ -343,7 +371,8 @@ class OrdersController extends GetxController {
     if (monthSections.isEmpty) return 0;
 
     final now = DateTime.now();
-    final currentMonthKey = '${now.month.toString().padLeft(2, '0')}-${now.year}';
+    final currentMonthKey =
+        '${now.month.toString().padLeft(2, '0')}-${now.year}';
 
     for (int i = 0; i < monthSections.length; i++) {
       final section = monthSections[i];

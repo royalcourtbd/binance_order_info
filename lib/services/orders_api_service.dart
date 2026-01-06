@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/api_response_model.dart';
+import '../models/balance_model.dart';
 
 class OrdersApiService {
   Future<ApiResponse<List<dynamic>>> getCompletedOrders({
@@ -41,7 +42,9 @@ class OrdersApiService {
 
         if (data is Map) {
           // Combine buy_orders and sell_orders
-          log('📊 [API] Data is a Map, checking for buy_orders and sell_orders');
+          log(
+            '📊 [API] Data is a Map, checking for buy_orders and sell_orders',
+          );
           if (data['buy_orders'] != null) {
             final buyOrders = data['buy_orders'] as List;
             log('✅ [API] Found ${buyOrders.length} buy orders');
@@ -99,12 +102,17 @@ class OrdersApiService {
         try {
           final jsonData = json.decode(response.body);
           // Check for both 'message' and 'detail' fields
-          final errorMsg = jsonData['message'] ?? jsonData['detail'] ?? 'Failed to fetch orders';
+          final errorMsg =
+              jsonData['message'] ??
+              jsonData['detail'] ??
+              'Failed to fetch orders';
           log('❌ [API] Error message from API: $errorMsg');
 
           // If it's a Binance restricted location error, show a friendly message
           if (errorMsg.toString().contains('restricted location')) {
-            return ApiResponse.error('API server blocked by Binance. Try using VPN or different region.');
+            return ApiResponse.error(
+              'API server blocked by Binance. Try using VPN or different region.',
+            );
           }
 
           return ApiResponse.error(errorMsg);
@@ -169,12 +177,17 @@ class OrdersApiService {
         try {
           final jsonData = json.decode(response.body);
           // Check for both 'message' and 'detail' fields
-          final errorMsg = jsonData['message'] ?? jsonData['detail'] ?? 'Failed to fetch summary';
+          final errorMsg =
+              jsonData['message'] ??
+              jsonData['detail'] ??
+              'Failed to fetch summary';
           log('❌ [API] Error message: $errorMsg');
 
           // If it's a Binance restricted location error, show a friendly message
           if (errorMsg.toString().contains('restricted location')) {
-            return ApiResponse.error('API server blocked by Binance. Try using VPN or different region.');
+            return ApiResponse.error(
+              'API server blocked by Binance. Try using VPN or different region.',
+            );
           }
 
           return ApiResponse.error(errorMsg);
@@ -193,6 +206,76 @@ class OrdersApiService {
       return ApiResponse.error('Invalid response from server');
     } catch (e, stackTrace) {
       log('❌ [API] Summary Unexpected error: $e');
+      log('❌ [API] Stack trace: $stackTrace');
+      return ApiResponse.error('Unexpected error: $e');
+    }
+  }
+
+  Future<ApiResponse<BalanceResponse>> getBalance({
+    bool useCache = ApiConfig.defaultUseCache,
+  }) async {
+    try {
+      final url = Uri.parse(
+        '${ApiConfig.baseUrl}${ApiConfig.balanceEndpoint}',
+      ).replace(queryParameters: {'use_cache': useCache.toString()}).toString();
+
+      log('📡 [API] Fetching balance...');
+      log('📡 [API] URL: $url');
+
+      final response = await http
+          .get(Uri.parse(url), headers: {'Content-Type': 'application/json'})
+          .timeout(Duration(seconds: ApiConfig.timeoutSeconds));
+
+      log('📡 [API] Balance Response Status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        log('✅ [API] Balance JSON decoded successfully');
+
+        final balanceData = BalanceResponse.fromJson(jsonData);
+        log('✅ [API] Balance data parsed successfully');
+        log('✅ [API] USDT Balance: ${balanceData.summary.usdtBalance}');
+
+        return ApiResponse<BalanceResponse>(
+          success: jsonData['success'] ?? true,
+          message: jsonData['message'] ?? 'Balance fetched successfully',
+          data: balanceData,
+          cached: jsonData['cached'],
+        );
+      } else {
+        log('❌ [API] Balance Error: Status ${response.statusCode}');
+        log('❌ [API] Response body: ${response.body}');
+
+        try {
+          final jsonData = json.decode(response.body);
+          final errorMsg =
+              jsonData['message'] ??
+              jsonData['detail'] ??
+              'Failed to fetch balance';
+          log('❌ [API] Error message: $errorMsg');
+
+          if (errorMsg.toString().contains('restricted location')) {
+            return ApiResponse.error(
+              'API server blocked by Binance. Try using VPN or different region.',
+            );
+          }
+
+          return ApiResponse.error(errorMsg);
+        } catch (_) {
+          return ApiResponse.error('Server error: ${response.statusCode}');
+        }
+      }
+    } on SocketException catch (e) {
+      log('❌ [API] Balance SocketException: $e');
+      return ApiResponse.error('No internet connection. Check WiFi.');
+    } on TimeoutException catch (e) {
+      log('❌ [API] Balance TimeoutException: $e');
+      return ApiResponse.error('Server not responding. Is the API running?');
+    } on FormatException catch (e) {
+      log('❌ [API] Balance FormatException: $e');
+      return ApiResponse.error('Invalid response from server');
+    } catch (e, stackTrace) {
+      log('❌ [API] Balance Unexpected error: $e');
       log('❌ [API] Stack trace: $stackTrace');
       return ApiResponse.error('Unexpected error: $e');
     }
