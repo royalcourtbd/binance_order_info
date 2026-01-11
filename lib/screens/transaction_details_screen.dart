@@ -45,308 +45,320 @@ class TransactionDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, TransactionItemModel transaction, OrdersController controller) {
+  Widget _buildBody(
+    BuildContext context,
+    TransactionItemModel transaction,
+    OrdersController controller,
+  ) {
     final isBuy = transaction.category.toUpperCase() == 'BUY';
     final transactionColor = isBuy ? Colors.blue : Colors.red;
 
     return SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header Section - Transaction Type Badge
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: transactionColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      transaction.category.toUpperCase(),
-                      style: TextStyle(
-                        color: transactionColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    transaction.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (transaction.createTime != null)
-                    Text(
-                      _formatDateTime(transaction.createTime!),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                ],
-              ),
+      child: Column(
+        children: [
+          // Header Section - Transaction Type Badge
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 12),
-
-            // Amount Section
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total Price',
+                  decoration: BoxDecoration(
+                    color: transactionColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    transaction.category.toUpperCase(),
                     style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
+                      color: transactionColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        "${transaction.fiatSymbol ?? '৳'} ${double.tryParse(transaction.totalPrice)?.toStringAsFixed(2) ?? transaction.totalPrice}",
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: transactionColor,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (transaction.fiat != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            transaction.fiat!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  transaction.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
                   ),
-                  if (transaction.cryptoAmount != null &&
-                      transaction.asset != null) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
+                ),
+                const SizedBox(height: 8),
+                if (transaction.createTime != null)
+                  Text(
+                    _formatDateTime(transaction.createTime!),
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Amount Section
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Price',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      "${transaction.fiatSymbol ?? '৳'} ${double.tryParse(transaction.totalPrice)?.toStringAsFixed(2) ?? transaction.totalPrice}",
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: transactionColor,
                       ),
-                      child: Column(
-                        children: [
-                          if (transaction.category.toUpperCase() == 'BUY') ...[
-                            _buildAmountDetailRow(
-                              'Receive Quantity',
-                              '${transaction.getReceivedQuantity()} ${transaction.asset}',
-                              isHighlighted: true,
-                            ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (transaction.fiat != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          transaction.fiat!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (transaction.cryptoAmount != null &&
+                    transaction.asset != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        if (transaction.category.toUpperCase() == 'BUY') ...[
+                          _buildAmountDetailRow(
+                            'Receive Quantity',
+                            '${transaction.getReceivedQuantity()} ${transaction.asset}',
+                            isHighlighted: true,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildAmountDetailRow(
+                            'Total Quantity',
+                            '${transaction.getTotalQuantity()} ${transaction.asset}',
+                          ),
+                          if (transaction.unitPrice != null) ...[
                             const SizedBox(height: 8),
                             _buildAmountDetailRow(
-                              'Total Quantity',
-                              '${transaction.getTotalQuantity()} ${transaction.asset}',
+                              'Unit Price',
+                              '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
                             ),
-                            if (transaction.unitPrice != null) ...[
-                              const SizedBox(height: 8),
-                              _buildAmountDetailRow(
-                                'Unit Price',
-                                '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
-                              ),
-                            ],
-                            if (transaction.effectiveCommission != null) ...[
-                              const SizedBox(height: 8),
-                              _buildAmountDetailRow(
-                                'Fee (${transaction.effectiveCommissionLabel})',
-                                '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
-                                valueColor: Colors.orange,
-                              ),
-                            ],
-                            if (transaction.manualCharge != null) ...[
-                              const SizedBox(height: 8),
-                              _buildAmountDetailRow(
-                                'Manual Charge',
-                                '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
-                                valueColor: Colors.deepOrange,
-                              ),
-                            ],
-                          ] else ...[
-                            _buildAmountDetailRow(
-                              'Total Quantity',
-                              '${transaction.getDisplayCryptoAmount()} ${transaction.asset}',
-                              isHighlighted: true,
-                            ),
+                          ],
+                          if (transaction.effectiveCommission != null) ...[
                             const SizedBox(height: 8),
                             _buildAmountDetailRow(
-                              'Release Quantity',
-                              '${transaction.getTotalQuantity()} ${transaction.asset}',
+                              'Fee (${transaction.effectiveCommissionLabel})',
+                              '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
+                              valueColor: Colors.orange,
                             ),
-                            if (transaction.unitPrice != null) ...[
-                              const SizedBox(height: 8),
-                              _buildAmountDetailRow(
-                                'Unit Price',
-                                '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
-                              ),
-                            ],
-                            if (transaction.effectiveCommission != null) ...[
-                              const SizedBox(height: 8),
-                              _buildAmountDetailRow(
-                                'Fee (${transaction.effectiveCommissionLabel})',
-                                '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
-                                valueColor: Colors.orange,
-                              ),
-                            ],
-                            if (transaction.manualCharge != null) ...[
-                              const SizedBox(height: 8),
-                              _buildAmountDetailRow(
-                                'Manual Charge',
-                                '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
-                                valueColor: Colors.deepOrange,
-                              ),
-                            ],
+                          ],
+                          if (transaction.manualCharge != null) ...[
+                            const SizedBox(height: 8),
+                            _buildAmountDetailRow(
+                              'Manual Charge',
+                              '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
+                              valueColor: Colors.deepOrange,
+                            ),
+                          ],
+                        ] else ...[
+                          _buildAmountDetailRow(
+                            'Total Quantity',
+                            '${transaction.getDisplayCryptoAmount()} ${transaction.asset}',
+                            isHighlighted: true,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildAmountDetailRow(
+                            'Release Quantity',
+                            '${transaction.getTotalQuantity()} ${transaction.asset}',
+                          ),
+                          if (transaction.unitPrice != null) ...[
+                            const SizedBox(height: 8),
+                            _buildAmountDetailRow(
+                              'Unit Price',
+                              '${double.tryParse(transaction.unitPrice!)?.toStringAsFixed(2) ?? transaction.unitPrice} ${transaction.fiat ?? ''}',
+                            ),
+                          ],
+                          if (transaction.effectiveCommission != null) ...[
+                            const SizedBox(height: 8),
+                            _buildAmountDetailRow(
+                              'Fee (${transaction.effectiveCommissionLabel})',
+                              '${double.tryParse(transaction.effectiveCommission!)?.toStringAsFixed(2) ?? transaction.effectiveCommission} ${transaction.asset}',
+                              valueColor: Colors.orange,
+                            ),
+                          ],
+                          if (transaction.manualCharge != null) ...[
+                            const SizedBox(height: 8),
+                            _buildAmountDetailRow(
+                              'Manual Charge',
+                              '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
+                              valueColor: Colors.deepOrange,
+                            ),
                           ],
                         ],
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ],
-              ),
+              ],
             ),
+          ),
 
-            const SizedBox(height: 12),
+          const SizedBox(height: 12),
 
-            // Transaction Details Section
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+          // Transaction Details Section
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Transaction Information',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Transaction Information',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildCopyableDetailRow(
-                    context,
-                    'Order Number',
-                    transaction.title.replaceFirst('#', ''),
-                  ),
-                  if (transaction.advNo != null) ...[
-                    _buildDivider(),
-                    _buildDetailRow('Advertisement No', transaction.advNo!),
-                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildCopyableDetailRow(
+                  context,
+                  'Order Number',
+                  transaction.title.replaceFirst('#', ''),
+                ),
+                if (transaction.advNo != null) ...[
                   _buildDivider(),
-                  _buildDetailRow('Payment Method', transaction.method),
-                  if (transaction.orderStatus != null) ...[
-                    _buildDivider(),
-                    _buildDetailRow('Order Status', transaction.orderStatus!,
-                        statusColor: _getStatusColor(transaction.orderStatus!)),
-                  ],
-                  if (transaction.counterPartNickName != null) ...[
-                    _buildDivider(),
-                    _buildDetailRow(
-                        'Counter Party', transaction.counterPartNickName!),
-                  ],
+                  _buildDetailRow('Advertisement No', transaction.advNo!),
+                ],
+                _buildDivider(),
+                _buildDetailRow('Payment Method', transaction.method),
+                if (transaction.orderStatus != null) ...[
                   _buildDivider(),
                   _buildDetailRow(
-                    'Transaction Type',
-                    transaction.category.toUpperCase(),
-                    valueColor: transactionColor,
+                    'Order Status',
+                    transaction.orderStatus!,
+                    statusColor: _getStatusColor(transaction.orderStatus!),
                   ),
-                  if (transaction.asset != null) ...[
-                    _buildDivider(),
-                    _buildDetailRow('Asset', transaction.asset!),
-                  ],
-                  if (transaction.createTime != null) ...[
-                    _buildDivider(),
-                    _buildDetailRow(
-                      'Date & Time',
-                      _formatFullDateTime(transaction.createTime!),
-                    ),
-                  ],
-                  if (transaction.additionalKycVerify != null) ...[
-                    _buildDivider(),
-                    _buildDetailRow(
-                      'KYC Verified',
-                      transaction.additionalKycVerify! ? 'Yes' : 'No',
-                      statusColor: transaction.additionalKycVerify!
-                          ? Colors.green
-                          : Colors.grey,
-                    ),
-                  ],
                 ],
-              ),
+                if (transaction.counterPartNickName != null) ...[
+                  _buildDivider(),
+                  _buildDetailRow(
+                    'Counter Party',
+                    transaction.counterPartNickName!,
+                  ),
+                ],
+                _buildDivider(),
+                _buildDetailRow(
+                  'Transaction Type',
+                  transaction.category.toUpperCase(),
+                  valueColor: transactionColor,
+                ),
+                if (transaction.asset != null) ...[
+                  _buildDivider(),
+                  _buildDetailRow('Asset', transaction.asset!),
+                ],
+                if (transaction.createTime != null) ...[
+                  _buildDivider(),
+                  _buildDetailRow(
+                    'Date & Time',
+                    _formatFullDateTime(transaction.createTime!),
+                  ),
+                ],
+                if (transaction.additionalKycVerify != null) ...[
+                  _buildDivider(),
+                  _buildDetailRow(
+                    'KYC Verified',
+                    transaction.additionalKycVerify! ? 'Yes' : 'No',
+                    statusColor: transaction.additionalKycVerify!
+                        ? Colors.green
+                        : Colors.grey,
+                  ),
+                ],
+              ],
             ),
+          ),
 
-            const SizedBox(height: 24),
-          ],
-        ),
-      );
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
   }
 
-  Widget _buildAmountDetailRow(String label, String value,
-      {Color? valueColor, bool isHighlighted = false}) {
+  Widget _buildAmountDetailRow(
+    String label,
+    String value, {
+    Color? valueColor,
+    bool isHighlighted = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -362,7 +374,9 @@ class TransactionDetailsScreen extends StatelessWidget {
           value,
           style: TextStyle(
             fontSize: isHighlighted ? 14 : 13,
-            color: valueColor ?? (isHighlighted ? Colors.black87 : Colors.grey[700]),
+            color:
+                valueColor ??
+                (isHighlighted ? Colors.black87 : Colors.grey[700]),
             fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.w500,
           ),
         ),
@@ -370,15 +384,20 @@ class TransactionDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCopyableDetailRow(BuildContext context, String label, String value,
-      {Color? valueColor, Color? statusColor}) {
+  Widget _buildCopyableDetailRow(
+    BuildContext context,
+    String label,
+    String value, {
+    Color? valueColor,
+    Color? statusColor,
+  }) {
     return GestureDetector(
-      onLongPress: () {
+      onTap: () {
         Clipboard.setData(ClipboardData(text: value));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$label copied to clipboard'),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 1),
             backgroundColor: Colors.green,
           ),
         );
@@ -410,7 +429,9 @@ class TransactionDetailsScreen extends StatelessWidget {
                     child: statusColor != null
                         ? Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: statusColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
@@ -436,11 +457,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                           ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
-                    Icons.copy,
-                    size: 16,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.copy, size: 16, color: Colors.grey[400]),
                 ],
               ),
             ),
@@ -450,8 +467,12 @@ class TransactionDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value,
-      {Color? valueColor, Color? statusColor}) {
+  Widget _buildDetailRow(
+    String label,
+    String value, {
+    Color? valueColor,
+    Color? statusColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -474,8 +495,10 @@ class TransactionDetailsScreen extends StatelessWidget {
             flex: 3,
             child: statusColor != null
                 ? Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -506,11 +529,7 @@ class TransactionDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      color: Colors.grey[200],
-    );
+    return Divider(height: 1, thickness: 1, color: Colors.grey[200]);
   }
 
   String _formatDateTime(int milliseconds) {
@@ -539,7 +558,9 @@ class TransactionDetailsScreen extends StatelessWidget {
 
   /// Show dialog to add/edit manual charge
   void _showManualChargeDialog(
-      BuildContext context, OrdersController controller) async {
+    BuildContext context,
+    OrdersController controller,
+  ) async {
     final isBuy = transaction.category.toUpperCase() == 'BUY';
     final orderNumber = transaction.title.replaceFirst('#', '');
 
@@ -559,23 +580,37 @@ class TransactionDetailsScreen extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success
-                ? 'Manual charge removed successfully'
-                : 'Failed to remove manual charge'),
+            content: Text(
+              success
+                  ? 'Manual charge removed successfully'
+                  : 'Failed to remove manual charge',
+            ),
             backgroundColor: success ? Colors.green : Colors.red,
           ),
         );
       }
     } else if (result is double) {
       // Save the manual charge
+      print('🔵 [Details] Attempting to save manual charge');
+      print('🔵 [Details] Order Number: $orderNumber');
+      print('🔵 [Details] Charge Amount: $result');
+
       final success = await controller.saveManualCharge(orderNumber, result);
+
+      print(
+        success ? '✅ [Details] Save successful' : '❌ [Details] Save failed',
+      );
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success
-                ? 'Manual charge saved successfully'
-                : 'Failed to save manual charge'),
+            content: Text(
+              success
+                  ? 'Manual charge saved successfully'
+                  : 'Failed to save manual charge',
+            ),
             backgroundColor: success ? Colors.green : Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }

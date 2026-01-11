@@ -60,7 +60,12 @@ class OrdersController extends GetxController {
       log('✅ [Controller] Processing ${response.data!.length} orders');
       try {
         // Load manual charges from storage
+        log('📥 [Controller] Fetching all manual charges from API...');
         final manualCharges = await _chargeService.getAllCharges();
+        log('📥 [Controller] Loaded ${manualCharges.length} manual charges');
+        if (manualCharges.isNotEmpty) {
+          log('📥 [Controller] Manual charges: $manualCharges');
+        }
 
         // Parse JSON to TransactionItemModel objects with error handling
         final List<TransactionItemModel> transactions = [];
@@ -73,6 +78,12 @@ class OrdersController extends GetxController {
 
             // Get manual charge for this order (if exists)
             final manualCharge = manualCharges[orderNumber];
+
+            if (manualCharge != null) {
+              log(
+                '💰 [Controller] Found manual charge for order $orderNumber: $manualCharge',
+              );
+            }
 
             // Add manual charge to the JSON before creating the model
             final transaction = TransactionItemModel.fromJson({
@@ -195,8 +206,17 @@ class OrdersController extends GetxController {
 
   /// Save manual charge for a specific order and refresh the data
   Future<bool> saveManualCharge(String orderNumber, double charge) async {
+    log(
+      '💾 [Controller] Saving manual charge for order: $orderNumber, charge: $charge',
+    );
     final success = await _chargeService.saveManualCharge(orderNumber, charge);
+    log(
+      success
+          ? '✅ [Controller] Save returned success'
+          : '❌ [Controller] Save returned failure',
+    );
     if (success) {
+      log('🔄 [Controller] Refreshing orders after save');
       await refreshOrders();
     }
     return success;
