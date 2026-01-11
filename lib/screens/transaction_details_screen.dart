@@ -590,17 +590,7 @@ class TransactionDetailsScreen extends StatelessWidget {
         );
       }
     } else if (result is double) {
-      // Save the manual charge
-      print('🔵 [Details] Attempting to save manual charge');
-      print('🔵 [Details] Order Number: $orderNumber');
-      print('🔵 [Details] Charge Amount: $result');
-
       final success = await controller.saveManualCharge(orderNumber, result);
-
-      print(
-        success ? '✅ [Details] Save successful' : '❌ [Details] Save failed',
-      );
-
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
