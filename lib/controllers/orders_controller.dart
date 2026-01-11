@@ -36,12 +36,9 @@ class OrdersController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Fetch completed orders, summary, and balance in parallel
-      await Future.wait([
-        _fetchCompletedOrders(),
-        _fetchSummary(),
-        _fetchBalance(),
-      ]);
+      // Fetch completed orders first so summary adjustments use latest data
+      await _fetchCompletedOrders();
+      await Future.wait([_fetchSummary(), _fetchBalance()]);
       log('✅ [Controller] fetchOrders completed successfully');
     } catch (e, stackTrace) {
       log('❌ [Controller] fetchOrders failed: $e');
@@ -142,12 +139,10 @@ class OrdersController extends GetxController {
     }
   }
 
-  /// Adjust summary to include manual charges from local storage
+  /// Adjust summary to include manual charges from API-backed orders
   Future<SummaryResponse> _adjustSummaryWithManualCharges(
     SummaryResponse apiSummary,
   ) async {
-    final manualCharges = await _chargeService.getAllCharges();
-
     double totalBuyCharges = 0.0;
     double totalSellCharges = 0.0;
 
@@ -155,8 +150,7 @@ class OrdersController extends GetxController {
     // We need to iterate through transactions to know which type each order is
     for (final section in dateSections) {
       for (final transaction in section.transactions) {
-        final orderNumber = transaction.title.replaceFirst('#', '');
-        final charge = manualCharges[orderNumber];
+        final charge = transaction.manualCharge;
 
         if (charge != null) {
           if (transaction.category.toUpperCase() == 'BUY') {

@@ -6,6 +6,7 @@ class ApiConfig {
   static const String completedOrdersEndpoint = '/api/orders/completed';
   static const String summaryEndpoint = '/api/orders/summary';
   static const String balanceEndpoint = '/api/orders/balance/all';
+  static const String manualChargesEndpoint = '/api/manual-charges/';
 
   // Configuration
   static const int timeoutSeconds = 15;
@@ -24,6 +25,14 @@ class ApiConfig {
 
   static String getSummaryUrl() {
     return '$baseUrl$summaryEndpoint';
+  }
+
+  static String getManualChargesUrl() {
+    return '$baseUrl$manualChargesEndpoint';
+  }
+
+  static String getManualChargeUrl(String orderNumber) {
+    return '$baseUrl$manualChargesEndpoint$orderNumber';
   }
 
   // Build URL with query parameters
