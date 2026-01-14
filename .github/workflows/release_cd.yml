@@ -17,9 +17,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      #---------------------------------------------------
+      # CHECKOUT SOURCE CODE
+      #---------------------------------------------------
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      #---------------------------------------------------
+      # SETUP JAVA FOR ANDROID BUILD
+      #---------------------------------------------------
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -28,11 +37,19 @@ jobs:
           java-version: "17"
           cache: "gradle"
 
+      #---------------------------------------------------
+      # SETUP FLUTTER SDK
+      #---------------------------------------------------
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.38.5" # Latest version
+          flutter-version: "3.38.5"
           cache: true
+
+      #---------------------------------------------------
+      # CACHE FLUTTER AND GRADLE DEPENDENCIES
+      #---------------------------------------------------
 
       - name: Cache Flutter dependencies
         uses: actions/cache@v4
@@ -48,18 +65,38 @@ jobs:
             ${{ runner.os }}-flutter-gradle-
             ${{ runner.os }}-flutter-
 
+      #---------------------------------------------------
+      # INSTALL FLUTTER DEPENDENCIES
+      #---------------------------------------------------
+
       - name: Install dependencies
         run: flutter pub get
+
+      #---------------------------------------------------
+      # RUN UNIT TESTS
+      #---------------------------------------------------
 
       - name: Run tests
         run: flutter test
         continue-on-error: true
 
+      #---------------------------------------------------
+      # BUILD APK (SPLIT PER ABI FOR OPTIMIZATION)
+      #---------------------------------------------------
+
       - name: Build APK (Release)
         run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/app/outputs/symbols
 
+      #---------------------------------------------------
+      # BUILD AAB FOR PLAY STORE
+      #---------------------------------------------------
+
       - name: Build AAB (Release)
         run: flutter build appbundle --release --obfuscate --split-debug-info=build/app/outputs/symbols
+
+      #---------------------------------------------------
+      # VERIFY BUILD OUTPUTS EXIST
+      #---------------------------------------------------
 
       - name: Verify build outputs
         run: |
@@ -82,7 +119,10 @@ jobs:
 
           echo "✅ Build outputs verified successfully"
 
-      # Improved: Better app info extraction from Code 2
+      #---------------------------------------------------
+      # EXTRACT APP INFO FROM PUBSPEC.YAML
+      #---------------------------------------------------
+
       - name: Get app info from pubspec
         id: app_info
         run: |
@@ -108,6 +148,10 @@ jobs:
           else
             echo "CHANGELOG=Initial release" >> $GITHUB_OUTPUT
           fi
+
+      #---------------------------------------------------
+      # CALCULATE BUILD FILE SIZES
+      #---------------------------------------------------
 
       - name: Calculate file sizes
         id: file_sizes
@@ -140,7 +184,10 @@ jobs:
           echo "APK Count: $APK_COUNT"
           echo "Symbols Size: $SYMBOLS_SIZE"
 
-      # Improved: Better date formatting with timezone support
+      #---------------------------------------------------
+      # FORMAT BUILD DATE (BANGLADESH TIMEZONE)
+      #---------------------------------------------------
+
       - name: Format build date
         id: build_date
         run: |
@@ -152,7 +199,10 @@ jobs:
           fi
           echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_OUTPUT
 
-      # Using ncipollo/release-action for better flexibility
+      #---------------------------------------------------
+      # CREATE GITHUB RELEASE (ONLY FOR VERSION TAGS)
+      #---------------------------------------------------
+
       - name: Create Release (only for tags)
         if: startsWith(github.ref, 'refs/tags/')
         uses: ncipollo/release-action@v1
@@ -207,6 +257,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
 
+      #---------------------------------------------------
+      # UPLOAD BUILD ARTIFACTS TO GITHUB
+      #---------------------------------------------------
+
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -216,12 +270,20 @@ jobs:
             build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
 
+      #---------------------------------------------------
+      # UPLOAD DEBUG SYMBOLS FOR CRASH ANALYSIS
+      #---------------------------------------------------
+
       - name: Upload Debug Symbols
         uses: actions/upload-artifact@v4
         with:
           name: debug-symbols-${{ github.ref_name || github.sha }}
           path: build/app/outputs/symbols/
           retention-days: 90
+
+      #---------------------------------------------------
+      # GENERATE BUILD SUMMARY FOR GITHUB UI
+      #---------------------------------------------------
 
       - name: Build Summary
         run: |
@@ -236,3 +298,106 @@ jobs:
           echo "🛡️ **Security:** Code obfuscation enabled" >> $GITHUB_STEP_SUMMARY
           echo "📱 Build artifacts uploaded successfully!" >> $GITHUB_STEP_SUMMARY
           echo "🔍 Debug symbols preserved for crash analysis" >> $GITHUB_STEP_SUMMARY
+
+      #---------------------------------------------------
+      # GET SHORT COMMIT HASH FOR SLACK NOTIFICATION
+      #---------------------------------------------------
+
+      - name: Get short SHA
+        id: short_sha
+        run: echo "sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      #---------------------------------------------------
+      # SLACK NOTIFICATION (ALWAYS RUN - SUCCESS OR FAILURE)
+      #---------------------------------------------------
+
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "${{ job.status == 'success' && '✅ Binance P2P Release Build' || '❌ Binance P2P Release Build' }}",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n`${{ job.status == 'success' && 'Success' || 'Failure' }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Version:*\n`${{ steps.app_info.outputs.VERSION || 'N/A' }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n<${{ github.event.head_commit.url }}|`${{ steps.short_sha.outputs.sha }}`>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch/Tag:*\n`${{ github.ref_name }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*APK Size:*\n`${{ steps.file_sizes.outputs.TOTAL_APK_SIZE || 'N/A' }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*AAB Size:*\n`${{ steps.file_sizes.outputs.AAB_SIZE || 'N/A' }}`"
+                    }
+                  ]
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "📅 *Build Date:* ${{ steps.build_date.outputs.BUILD_DATE || 'N/A' }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "📦 Download Release",
+                        "emoji": true
+                      },
+                      "url": "https://github.com/royalcourtbd/binance_order_info/releases",
+                      "style": "primary"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "🔍 View Workflow",
+                        "emoji": true
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "📂 Repository",
+                        "emoji": true
+                      },
+                      "url": "https://github.com/royalcourtbd/binance_order_info"
+                    }
+                  ]
+                }
+              ]
+            }
