@@ -452,7 +452,7 @@ class PricingCalculatorScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           const Text(
-                            'Buyer 1.80% extra দেবে',
+                            'Buyer 1.85% extra দেবে',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
@@ -664,7 +664,7 @@ class PricingCalculatorScreen extends StatelessWidget {
             ),
             _buildFeeRow(
               'Sell করার সময় buyer অতিরিক্ত দেয়',
-              '1.80%',
+              '1.85%',
               Colors.green,
             ),
             const Divider(height: 24),
@@ -809,7 +809,7 @@ class PricingCalculatorScreen extends StatelessWidget {
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Unit Price এ buyer এর 1.80% bonus যোগ হয়ে effective rate হয়',
+                      'Unit Price এ buyer এর 1.85% bonus যোগ হয়ে effective rate হয়',
                       style: TextStyle(fontSize: 11, color: Colors.black87),
                     ),
                   ),

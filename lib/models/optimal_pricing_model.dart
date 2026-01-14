@@ -29,7 +29,7 @@ class OptimalPricingModel {
 
   // Binance fee structure (fixed values)
   static const double binanceFeeRate = 0.002; // 0.2% commission
-  static const double buyerMarkupRate = 0.0180; // 1.80% extra buyer pays
+  static const double buyerMarkupRate = 0.0185; // 1.85% extra buyer pays
   static const double fixedBuyCharge = 5.0; // Fixed 5 BDT per buy transaction
 
   OptimalPricingModel({
@@ -111,23 +111,23 @@ class OptimalPricingModel {
     // Formula derivation:
     // When selling X USDT at unit price P:
     // - Wallet outflow: X × 1.002 USDT (including 0.2% commission)
-    // - Income: X × P × 1.0180 BDT (including 1.80% buyer bonus)
+    // - Income: X × P × 1.0185 BDT (including 1.85% buyer bonus)
     // - Cost: X × 1.002 × avgBuyRate BDT
-    // - Profit: (X × P × 1.0180) - (X × 1.002 × avgBuyRate)
+    // - Profit: (X × P × 1.0185) - (X × 1.002 × avgBuyRate)
     // - Target: X × targetProfitPerUsdt
     //
     // Solving for P:
-    // P × 1.0180 - 1.002 × avgBuyRate = targetProfitPerUsdt
-    // P = (targetProfitPerUsdt + 1.002 × avgBuyRate) / 1.0180
+    // P × 1.0185 - 1.002 × avgBuyRate = targetProfitPerUsdt
+    // P = (targetProfitPerUsdt + 1.002 × avgBuyRate) / 1.0185
     //
     final binanceUnitPrice = avgBuyRate > 0
-        ? (targetProfitPerUsdt + (1.002 * avgBuyRate)) / 1.0180
+        ? (targetProfitPerUsdt + (1.002 * avgBuyRate)) / 1.0185
         : 0.0;
 
     // Effective sell rate = what you actually receive per USDT from wallet
-    // When selling X USDT: wallet outflow = X × 1.002, income = X × P × 1.0180
-    // Effective rate = income / wallet outflow = (X × P × 1.0180) / (X × 1.002)
-    //                = (P × 1.0180) / 1.002
+    // When selling X USDT: wallet outflow = X × 1.002, income = X × P × 1.0185
+    // Effective rate = income / wallet outflow = (X × P × 1.0185) / (X × 1.002)
+    //                = (P × 1.0185) / 1.002
     //                = (targetProfitPerUsdt + 1.002 × avgBuyRate) / 1.002
     final effectiveSellRate =
         (targetProfitPerUsdt + (1.002 * avgBuyRate)) / 1.002;
@@ -186,7 +186,7 @@ class OptimalPricingModel {
   OptimalPricingModel copyWithTargetProfit(double newTargetProfit) {
     // Recalculate Binance unit price and effective rate
     final newBinanceUnitPrice = avgBuyRate > 0
-        ? (newTargetProfit + (1.002 * avgBuyRate)) / 1.0180
+        ? (newTargetProfit + (1.002 * avgBuyRate)) / 1.0185
         : 0.0;
     final newEffectiveSellRate =
         (newTargetProfit + (1.002 * avgBuyRate)) / 1.002;
