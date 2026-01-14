@@ -7,6 +7,7 @@ import '../widgets/month_section.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
 import '../widgets/empty_state_widget.dart';
+import 'pricing_calculator_screen.dart';
 
 class P2POrderScreen extends StatefulWidget {
   const P2POrderScreen({super.key});
@@ -92,6 +93,19 @@ class _P2POrderScreenState extends State<P2POrderScreen> {
           ),
           centerTitle: true,
           actions: [
+            // Calculator button
+            IconButton(
+              icon: const Icon(Icons.calculate, color: Colors.black),
+              tooltip: 'Price Calculator',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => PricingCalculatorScreen(),
+                  ),
+                );
+              },
+            ),
+            // Refresh button
             Obx(
               () => controller.isLoading.value
                   ? const Padding(
