@@ -1,4 +1,5 @@
 import 'transaction_item_model.dart';
+import 'month_section_model.dart';
 
 /// Optimal Pricing Calculator Model
 /// Calculates the required sell rate to achieve target profit per USDT
@@ -50,7 +51,63 @@ class OptimalPricingModel {
     required this.effectiveSellRate,
   });
 
+  /// Factory constructor to create OptimalPricingModel from MonthSectionModel
+  /// This ensures consistency with the profit displayed in MonthSection header
+  factory OptimalPricingModel.fromMonthSection(
+    MonthSectionModel monthSection,
+    List<TransactionItemModel> transactions, {
+    double targetProfitPerUsdt = 1.0,
+  }) {
+    // Use pre-calculated values from MonthSectionModel for consistency
+    final totalBuyUsdt = double.tryParse(monthSection.monthBuyUsdt) ?? 0.0;
+    final totalBuyAmount =
+        double.tryParse(monthSection.monthBuyWithCharge) ?? 0.0;
+    final avgBuyRate = double.tryParse(monthSection.avgBuyRate) ?? 0.0;
+
+    final totalSellUsdt = double.tryParse(monthSection.monthSellUsdt) ?? 0.0;
+    final totalSellAmount =
+        double.tryParse(monthSection.monthSellWithCharge) ?? 0.0;
+    final avgSellRate = double.tryParse(monthSection.avgSellRate) ?? 0.0;
+
+    // Count transactions
+    final buyCount =
+        transactions.where((t) => t.category.toUpperCase() == 'BUY').length;
+    final sellCount =
+        transactions.where((t) => t.category.toUpperCase() == 'SELL').length;
+
+    // Use the same profit value from MonthSectionModel
+    final currentProfit = double.tryParse(monthSection.profitTk) ?? 0.0;
+    final currentProfitPerUsdt =
+        totalSellUsdt > 0 ? currentProfit / totalSellUsdt : 0.0;
+
+    // Calculate Binance unit price and effective sell rate
+    final binanceUnitPrice = avgBuyRate > 0
+        ? (targetProfitPerUsdt + (1.002 * avgBuyRate)) / 1.0185
+        : 0.0;
+    final effectiveSellRate =
+        (targetProfitPerUsdt + (1.002 * avgBuyRate)) / 1.002;
+
+    return OptimalPricingModel(
+      totalBuyAmount: totalBuyAmount,
+      totalBuyUsdt: totalBuyUsdt,
+      avgBuyRate: avgBuyRate,
+      buyTransactionCount: buyCount,
+      averageFixedCharge: buyCount > 0 ? fixedBuyCharge : 0.0,
+      totalSellAmount: totalSellAmount,
+      totalSellUsdt: totalSellUsdt,
+      avgSellRate: avgSellRate,
+      sellTransactionCount: sellCount,
+      currentProfit: currentProfit,
+      currentProfitPerUsdt: currentProfitPerUsdt,
+      targetProfitPerUsdt: targetProfitPerUsdt,
+      requiredSellRate: effectiveSellRate,
+      binanceUnitPrice: binanceUnitPrice,
+      effectiveSellRate: effectiveSellRate,
+    );
+  }
+
   /// Factory constructor to create OptimalPricingModel from transaction list
+  /// @deprecated Use fromMonthSection for consistent profit values
   factory OptimalPricingModel.fromTransactions(
     List<TransactionItemModel> transactions, {
     double targetProfitPerUsdt = 1.0,

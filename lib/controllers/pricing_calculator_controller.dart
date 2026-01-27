@@ -30,17 +30,20 @@ class PricingCalculatorController extends GetxController {
     isCalculating.value = true;
 
     try {
-      // Get current month or selected month transactions
+      // Get selected month section and transactions
+      final monthSection = _getSelectedMonthSection();
       final transactions = _getTransactionsForCalculation();
 
-      if (transactions.isEmpty) {
+      if (monthSection == null || transactions.isEmpty) {
         log('⚠️ [PricingCalculator] No transactions found');
         pricingModel.value = null;
         return;
       }
 
-      // Create pricing model from transactions
-      final model = OptimalPricingModel.fromTransactions(
+      // Create pricing model from MonthSectionModel for consistency
+      // This ensures profit matches the value shown in month header
+      final model = OptimalPricingModel.fromMonthSection(
+        monthSection,
         transactions,
         targetProfitPerUsdt: targetProfit.value,
       );
@@ -60,30 +63,36 @@ class PricingCalculatorController extends GetxController {
     }
   }
 
-  /// Get transactions for the selected period
-  List<TransactionItemModel> _getTransactionsForCalculation() {
+  /// Get selected MonthSectionModel
+  MonthSectionModel? _getSelectedMonthSection() {
     final monthSections = ordersController.monthSections;
 
     if (monthSections.isEmpty) {
-      return [];
+      return null;
     }
-
-    // If no month selected or month doesn't exist, use current month (first in list)
-    MonthSectionModel? selectedMonthSection;
 
     if (selectedMonth.value.isEmpty) {
       // Use current month (first month in list)
-      selectedMonthSection = monthSections.first;
+      return monthSections.first;
     } else {
       // Find selected month
       try {
-        selectedMonthSection = monthSections.firstWhere(
+        return monthSections.firstWhere(
           (m) => m.monthName == selectedMonth.value,
         );
       } catch (e) {
         // If not found, use current month
-        selectedMonthSection = monthSections.first;
+        return monthSections.first;
       }
+    }
+  }
+
+  /// Get transactions for the selected period
+  List<TransactionItemModel> _getTransactionsForCalculation() {
+    final selectedMonthSection = _getSelectedMonthSection();
+
+    if (selectedMonthSection == null) {
+      return [];
     }
 
     // Extract all transactions from date sections
