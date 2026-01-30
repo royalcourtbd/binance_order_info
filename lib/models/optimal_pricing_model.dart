@@ -30,7 +30,8 @@ class OptimalPricingModel {
 
   // Binance fee structure (fixed values)
   static const double binanceFeeRate = 0.002; // 0.2% commission
-  static const double buyerMarkupRate = 0.0185; // 1.85% extra buyer pays
+  final double
+  buyerMarkupRate; // Dynamic buyer markup rate based on sell manual charges
   static const double fixedBuyCharge = 5.0; // Fixed 5 BDT per buy transaction
 
   OptimalPricingModel({
@@ -49,6 +50,7 @@ class OptimalPricingModel {
     required this.requiredSellRate,
     required this.binanceUnitPrice,
     required this.effectiveSellRate,
+    required this.buyerMarkupRate,
   });
 
   /// Factory constructor to create OptimalPricingModel from MonthSectionModel
@@ -70,19 +72,38 @@ class OptimalPricingModel {
     final avgSellRate = double.tryParse(monthSection.avgSellRate) ?? 0.0;
 
     // Count transactions
-    final buyCount =
-        transactions.where((t) => t.category.toUpperCase() == 'BUY').length;
-    final sellCount =
-        transactions.where((t) => t.category.toUpperCase() == 'SELL').length;
+    final buyCount = transactions
+        .where((t) => t.category.toUpperCase() == 'BUY')
+        .length;
+    final sellCount = transactions
+        .where((t) => t.category.toUpperCase() == 'SELL')
+        .length;
 
     // Use the same profit value from MonthSectionModel
     final currentProfit = double.tryParse(monthSection.profitTk) ?? 0.0;
-    final currentProfitPerUsdt =
-        totalSellUsdt > 0 ? currentProfit / totalSellUsdt : 0.0;
+    final currentProfitPerUsdt = totalSellUsdt > 0
+        ? currentProfit / totalSellUsdt
+        : 0.0;
 
-    // Calculate Binance unit price and effective sell rate
+    // Calculate dynamic buyer markup rate from sell transactions
+    double buyerMarkupRate = 0.0185; // Default 1.85%
+    final sellTransactions = transactions
+        .where((t) => t.category.toUpperCase() == 'SELL')
+        .toList();
+    if (sellTransactions.isNotEmpty && totalSellAmount > 0) {
+      double totalSellManualCharges = 0.0;
+      for (var transaction in sellTransactions) {
+        totalSellManualCharges += transaction.manualCharge ?? 0.0;
+      }
+      // Calculate markup rate: manual charges / total sell amount
+      if (totalSellManualCharges > 0 && totalSellAmount > 0) {
+        buyerMarkupRate = totalSellManualCharges / totalSellAmount;
+      }
+    }
+
+    // Calculate Binance unit price and effective sell rate using dynamic buyer markup
     final binanceUnitPrice = avgBuyRate > 0
-        ? (targetProfitPerUsdt + (1.002 * avgBuyRate)) / 1.0185
+        ? (targetProfitPerUsdt + (1.002 * avgBuyRate)) / (1 + buyerMarkupRate)
         : 0.0;
     final effectiveSellRate =
         (targetProfitPerUsdt + (1.002 * avgBuyRate)) / 1.002;
@@ -103,6 +124,7 @@ class OptimalPricingModel {
       requiredSellRate: effectiveSellRate,
       binanceUnitPrice: binanceUnitPrice,
       effectiveSellRate: effectiveSellRate,
+      buyerMarkupRate: buyerMarkupRate,
     );
   }
 
@@ -163,22 +185,35 @@ class OptimalPricingModel {
         ? currentProfit / totalSellUsdt
         : 0.0;
 
+    // Calculate dynamic buyer markup rate from sell transactions
+    double buyerMarkupRate = 0.0185; // Default 1.85%
+    if (sellTransactions.isNotEmpty && totalSellAmount > 0) {
+      double totalSellManualCharges = 0.0;
+      for (var transaction in sellTransactions) {
+        totalSellManualCharges += transaction.manualCharge ?? 0.0;
+      }
+      // Calculate markup rate: manual charges / total sell amount
+      if (totalSellManualCharges > 0 && totalSellAmount > 0) {
+        buyerMarkupRate = totalSellManualCharges / totalSellAmount;
+      }
+    }
+
     // Calculate Binance unit price and effective sell rate
     //
     // Formula derivation:
     // When selling X USDT at unit price P:
     // - Wallet outflow: X × 1.002 USDT (including 0.2% commission)
-    // - Income: X × P × 1.0185 BDT (including 1.85% buyer bonus)
+    // - Income: X × P × (1 + buyerMarkupRate) BDT (including buyer bonus)
     // - Cost: X × 1.002 × avgBuyRate BDT
-    // - Profit: (X × P × 1.0185) - (X × 1.002 × avgBuyRate)
+    // - Profit: (X × P × (1 + buyerMarkupRate)) - (X × 1.002 × avgBuyRate)
     // - Target: X × targetProfitPerUsdt
     //
     // Solving for P:
-    // P × 1.0185 - 1.002 × avgBuyRate = targetProfitPerUsdt
-    // P = (targetProfitPerUsdt + 1.002 × avgBuyRate) / 1.0185
+    // P × (1 + buyerMarkupRate) - 1.002 × avgBuyRate = targetProfitPerUsdt
+    // P = (targetProfitPerUsdt + 1.002 × avgBuyRate) / (1 + buyerMarkupRate)
     //
     final binanceUnitPrice = avgBuyRate > 0
-        ? (targetProfitPerUsdt + (1.002 * avgBuyRate)) / 1.0185
+        ? (targetProfitPerUsdt + (1.002 * avgBuyRate)) / (1 + buyerMarkupRate)
         : 0.0;
 
     // Effective sell rate = what you actually receive per USDT from wallet
@@ -208,6 +243,7 @@ class OptimalPricingModel {
       requiredSellRate: requiredSellRate,
       binanceUnitPrice: binanceUnitPrice,
       effectiveSellRate: effectiveSellRate,
+      buyerMarkupRate: buyerMarkupRate,
     );
   }
 
@@ -241,9 +277,9 @@ class OptimalPricingModel {
 
   /// Copy with new target profit
   OptimalPricingModel copyWithTargetProfit(double newTargetProfit) {
-    // Recalculate Binance unit price and effective rate
+    // Recalculate Binance unit price and effective rate using dynamic buyer markup
     final newBinanceUnitPrice = avgBuyRate > 0
-        ? (newTargetProfit + (1.002 * avgBuyRate)) / 1.0185
+        ? (newTargetProfit + (1.002 * avgBuyRate)) / (1 + buyerMarkupRate)
         : 0.0;
     final newEffectiveSellRate =
         (newTargetProfit + (1.002 * avgBuyRate)) / 1.002;
@@ -264,6 +300,7 @@ class OptimalPricingModel {
       requiredSellRate: newEffectiveSellRate,
       binanceUnitPrice: newBinanceUnitPrice,
       effectiveSellRate: newEffectiveSellRate,
+      buyerMarkupRate: buyerMarkupRate,
     );
   }
 }

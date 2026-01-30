@@ -451,9 +451,9 @@ class PricingCalculatorScreen extends StatelessWidget {
                             color: Colors.blue.shade700,
                           ),
                           const SizedBox(width: 6),
-                          const Text(
-                            'Buyer 1.85% extra দেবে',
-                            style: TextStyle(
+                          Text(
+                            'Buyer ${(model.buyerMarkupRate * 100).toStringAsFixed(2)}% extra দেবে',
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
                               fontWeight: FontWeight.w600,
@@ -628,59 +628,64 @@ class PricingCalculatorScreen extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.blue.shade700),
-                const SizedBox(width: 8),
-                const Text(
-                  'Binance ফি বিস্তারিত',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+        child: Obx(() {
+          final model = controller.pricingModel.value;
+          if (model == null) return const SizedBox.shrink();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue.shade700),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Binance ফি বিস্তারিত',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
+                ],
+              ),
+              const Divider(height: 24),
+              _buildFeeRow(
+                'Buy করার সময় Binance commission',
+                '0.20%',
+                Colors.blue,
+              ),
+              _buildFeeRow(
+                'Buy করার সময় আনুমানিক fixed charge',
+                '৳5.00',
+                Colors.blue,
+              ),
+              const SizedBox(height: 8),
+              _buildFeeRow(
+                'Sell করার সময় Binance commission',
+                '0.20%',
+                Colors.red,
+              ),
+              _buildFeeRow(
+                'Sell করার সময় buyer অতিরিক্ত দেয়',
+                '${(model.buyerMarkupRate * 100).toStringAsFixed(2)}%',
+                Colors.green,
+              ),
+              const Divider(height: 24),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
-            ),
-            const Divider(height: 24),
-            _buildFeeRow(
-              'Buy করার সময় Binance commission',
-              '0.20%',
-              Colors.blue,
-            ),
-            _buildFeeRow(
-              'Buy করার সময় আনুমানিক fixed charge',
-              '৳5.00',
-              Colors.blue,
-            ),
-            const SizedBox(height: 8),
-            _buildFeeRow(
-              'Sell করার সময় Binance commission',
-              '0.20%',
-              Colors.red,
-            ),
-            _buildFeeRow(
-              'Sell করার সময় buyer অতিরিক্ত দেয়',
-              '1.85%',
-              Colors.green,
-            ),
-            const Divider(height: 24),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
+                child: const Text(
+                  'নোট: উপরের calculation এ সব fees এবং charges হিসাব করা আছে। আপনার actual transactions এর data থেকে average buy rate বের করা হয়েছে।',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
               ),
-              child: const Text(
-                'নোট: উপরের calculation এ সব fees এবং charges হিসাব করা আছে। আপনার actual transactions এর data থেকে average buy rate বের করা হয়েছে।',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -768,9 +773,10 @@ class PricingCalculatorScreen extends StatelessWidget {
                 ...scenarios.map((scenario) {
                   final profit = scenario['profit'] as double;
                   final label = scenario['label'] as String;
-                  // Calculate Binance unit price for this profit
+                  // Calculate Binance unit price for this profit using dynamic buyer markup rate
                   final binancePrice = model.avgBuyRate > 0
-                      ? (profit + (1.002 * model.avgBuyRate)) / 1.0185
+                      ? (profit + (1.002 * model.avgBuyRate)) /
+                            (1 + model.buyerMarkupRate)
                       : 0.0;
                   final totalProfit = profit * 100;
                   final isRecommended = profit == 1.00;
@@ -807,10 +813,13 @@ class PricingCalculatorScreen extends StatelessWidget {
                 children: [
                   Icon(Icons.lightbulb, size: 16, color: Colors.blue.shade700),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Unit Price এ buyer এর 1.85% bonus যোগ হয়ে effective rate হয়',
-                      style: TextStyle(fontSize: 11, color: Colors.black87),
+                      'Unit Price এ buyer এর ${(model.buyerMarkupRate * 100).toStringAsFixed(2)}% bonus যোগ হয়ে effective rate হয়',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
                 ],
