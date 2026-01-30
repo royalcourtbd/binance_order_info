@@ -7,6 +7,19 @@ class AmountSection extends StatelessWidget {
 
   const AmountSection({super.key, required this.transaction});
 
+  /// Build manual charge string with percentage
+  String _buildManualChargeWithPercentage(TransactionItemModel transaction) {
+    final manualCharge = transaction.manualCharge!;
+    final totalPrice = double.tryParse(transaction.totalPrice) ?? 0.0;
+
+    if (totalPrice > 0) {
+      final percentage = (manualCharge / totalPrice) * 100;
+      return '${manualCharge.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'} (${percentage.toStringAsFixed(2)}%)';
+    }
+
+    return '${manualCharge.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isBuy = transaction.category.toUpperCase() == 'BUY';
@@ -71,7 +84,8 @@ class AmountSection extends StatelessWidget {
                 ),
             ],
           ),
-          if (transaction.cryptoAmount != null && transaction.asset != null) ...[
+          if (transaction.cryptoAmount != null &&
+              transaction.asset != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -111,7 +125,7 @@ class AmountSection extends StatelessWidget {
                       const SizedBox(height: 8),
                       AmountDetailRow(
                         'Manual Charge',
-                        '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
+                        _buildManualChargeWithPercentage(transaction),
                         valueColor: Colors.deepOrange,
                       ),
                     ],
@@ -145,7 +159,7 @@ class AmountSection extends StatelessWidget {
                       const SizedBox(height: 8),
                       AmountDetailRow(
                         'Manual Charge',
-                        '${transaction.manualCharge!.toStringAsFixed(2)} ${transaction.fiat ?? 'BDT'}',
+                        _buildManualChargeWithPercentage(transaction),
                         valueColor: Colors.deepOrange,
                       ),
                     ],
