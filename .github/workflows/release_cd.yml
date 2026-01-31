@@ -3,7 +3,7 @@ name: Android Release Build
 on:
   push:
     branches:
-      - build # build branch এ push হলে
+      - deployment # deployment branch এ push হলে
     tags:
       - "v*.*.*" # অথবা tag করলে
 

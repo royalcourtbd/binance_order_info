@@ -2,9 +2,9 @@ name: CI Validation
 
 on:
   pull_request:
-    branches: [main, dev, build]
+    branches: [main, dev, deployment]
   push:
-    branches: [build]
+    branches: [deployment]
 
 jobs:
   validate:
@@ -44,7 +44,7 @@ jobs:
 
       - name: Generate localizations
         run: flutter gen-l10n
-        continue-on-error: true  # যদি localization না থাকে
+        continue-on-error: true # যদি localization না থাকে
 
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
