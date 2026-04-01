@@ -1,0 +1,55 @@
+name: Cleanup Workflow Runs
+
+on:
+  workflow_dispatch:
+    inputs:
+      keep_recent:
+        description: "Number of recent runs to keep (0 = delete all)"
+        required: false
+        default: "0"
+        type: string
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: write
+
+    steps:
+      - name: Delete workflow runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const keep = parseInt('${{ inputs.keep_recent }}') || 0;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const workflows = await github.paginate(
+              github.rest.actions.listRepoWorkflows,
+              { owner, repo }
+            );
+
+            let deleted = 0;
+
+            for (const wf of workflows) {
+              const runs = await github.paginate(
+                github.rest.actions.listWorkflowRuns,
+                { owner, repo, workflow_id: wf.id, per_page: 100 }
+              );
+
+              const toDelete = keep > 0 ? runs.slice(keep) : runs;
+
+              for (const run of toDelete) {
+                try {
+                  await github.rest.actions.deleteWorkflowRun({
+                    owner, repo, run_id: run.id,
+                  });
+                  deleted++;
+                } catch (e) {
+                  console.log(`Failed to delete run ${run.id}: ${e.message}`);
+                }
+              }
+            }
+
+            console.log(`Deleted ${deleted} workflow runs.`);
